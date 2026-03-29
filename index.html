@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <!-- html2canvas for preview-to-image copy -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- Pre-processed Global Model Data (Auto-generated from Excel) -->
+    <script src="global-model-data.js"></script>
 
     <style type="text/css">
         @import url(https://fonts.googleapis.com/earlyaccess/notosanskr.css);
@@ -1176,10 +1178,37 @@
             background: #e8e8e8;
             color: #444;
         }
+
+        /* 로딩 인디케이터 */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--lg-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 
 <body>
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">데이터를 불러오는 중입니다... (약 31만 행)</div>
+    </div>
 
     <div class="mobile-tabs" id="mobileTabs">
         <button id="btnTabEdit" class="active" onclick="switchTab('edit')">입력</button>
@@ -1390,25 +1419,63 @@
         <div class="cp-section-title">기타</div>
         <div class="cp-more-btn" onclick="triggerNativeColorInput()"><i class="fas fa-palette"></i> 다른 색 선택...</div>
         <input type="color" id="nativeColorInput" style="display:none;" onchange="selectQuickColor(this.value)">
+        <!-- Global Excel File Input (Hidden) -->
+        <input type="file" id="excelFileInput" style="display:none;" accept=".xlsx, .xls"
+            onchange="handleFileSelect(event)">
     </div>
 
     <script>
+        // Global을 위한 전역 상태
+        let appRegion = 'ko'; // 'ko' or 'global'
+        // globalExcelData는 외부 스크립트(global-model-data.js)에서 이미 선언되어 로드됩니다.
         // 언어 선택 상태 관리 (UI 토글용)
-        function changeAppLanguage(lang) {
+        async function changeAppLanguage(lang) {
             const koBtn = document.getElementById('btnLangKo');
             const enBtn = document.getElementById('btnLangEn');
 
             if (lang === 'ko') {
+                appRegion = 'ko';
                 koBtn.classList.add('active');
                 enBtn.classList.remove('active');
             } else {
+                appRegion = 'global';
                 enBtn.classList.add('active');
                 koBtn.classList.remove('active');
+
+                // Global 선택 시 엑셀 데이터 로드 시도
+                if (!globalExcelData) {
+                    await loadGlobalExcelData();
+                } else {
+                    // 이미 로드된 경우 리스트 갱신
+                    renderLv2List();
+                }
             }
 
-            // 추후 언어별 템플릿 변경 기능 확장 시 여기에 로직 추가 가능
-            console.log('Selected Language:', lang);
+            // 지역 전환 시 기존 선택값 초기화 (데이터셋이 다르므로 필수)
+            clearProductFamily();
+            clearAppliedModel();
+
+            console.log('Selected Region:', appRegion);
         }
+
+        async function loadGlobalExcelData() {
+            // 이미 global-model-data.js가 <script> 태그로 로드되어 window.globalExcelData에 담겨 있습니다.
+            if (typeof globalExcelData !== 'undefined' && globalExcelData !== null) {
+                console.log('Global model data already loaded from JS file:', globalExcelData.length, 'rows');
+                return;
+            }
+
+            console.warn('globalExcelData not found. JS file might be missing or failed to load.');
+            
+            // 만약 로드되지 않았다면 기존처럼 수동 선택 안내만 남김 (HTML 파서 제거로 인해 수동 선택도 제약될 수 있음)
+            if (confirm('Global 모델 데이터(global-model-data.js)를 찾을 수 없습니다. 파일을 확인해 주세요.')) {
+                // 수동 선택 기능은 현재 비활성화됨
+            } else {
+                changeAppLanguage('ko');
+            }
+        }
+
+        // Note: global-model-data.js 방식으로 전환되어 엑셀 파싱 로직이 제거되었습니다.
 
         // Custom renderer to wrap tables in .tbl-scroll div
         const renderer = new marked.Renderer();
@@ -2774,7 +2841,10 @@ ${contentBody}
                         </label>
                     </div>
                     <div id="lv2List" style="overflow-y: auto; flex: 1;">
-                        <!-- Lv2 Checkboxes will be here -->
+                        <div style="color: #999; text-align: center; margin-top: 50px;">
+                            데이터를 선택하거나<br>
+                            <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;" onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
+                        </div>
                     </div>
                 </div>
 
@@ -2819,6 +2889,15 @@ ${contentBody}
 
             <div style="margin-bottom: 15px;">
                 <p id="modelFilterInfo" style="font-size: 14px; color: #666; margin-bottom: 5px;">선택된 제품군: 없음</p>
+                
+                <!-- 법인 코드 필터 (Global 모드용) -->
+                <div id="corpFilterContainer" style="margin-bottom: 10px; display: none;">
+                    <label style="font-size: 12px; font-weight: bold; margin-bottom: 3px; display: block;">법인 필터 (Corp Cd):</label>
+                    <select id="corpCdSelect" onchange="handleCorpCdChange(this)" style="width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="ALL">★ ALL (전체 법인)</option>
+                    </select>
+                </div>
+
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="modelSearchInput" placeholder="모델명 검색 (예: OLED65)"
                         style="flex: 1; padding: 8px;" onkeyup="filterModelList()">
@@ -2847,7 +2926,10 @@ ${contentBody}
             <div id="modelList"
                 style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff;">
                 <!-- Model List Items will be injected here -->
-                <div style="text-align: center; color: #999; margin-top: 100px;">제품군을 먼저 선택해주세요.</div>
+                <div style="text-align: center; color: #999; margin-top: 100px;">
+                    제품군을 먼저 선택하거나<br>
+                    <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;" onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
+                </div>
             </div>
 
             <div style="margin-top: 20px; text-align: right;">
@@ -2866,6 +2948,7 @@ ${contentBody}
         let selectedLv2Codes = new Set();
         let selectedLv3Codes = new Set();
         let selectedModels = new Set();
+        let selectedCorpCd = 'ALL'; // 법인 필터 상태
 
         function openProductModal() {
             document.getElementById('productModal').style.display = "block";
@@ -2881,10 +2964,20 @@ ${contentBody}
             const container = document.getElementById('lv2List');
             container.innerHTML = "";
 
+            // 데이터 소스 결정
+            let sourceData = (appRegion === 'ko') ? productData : globalExcelData;
+
+            if (!sourceData) {
+                container.innerHTML = '<div style="color: #999; text-align: center; margin-top: 50px; font-size: 12px;">데이터를 불러오는 중입니다...</div>';
+                return;
+            }
+
             const lv2Map = new Map();
-            productData.forEach(item => {
-                if (!lv2Map.has(item.lv2)) {
-                    lv2Map.set(item.lv2, item.lv2Name);
+            sourceData.forEach(item => {
+                const code = item.lv2;
+                const name = (appRegion === 'ko') ? item.lv2Name : item.lv2; // Global은 C열(prod_cd)을 이름으로 사용
+                if (!lv2Map.has(code)) {
+                    lv2Map.set(code, name);
                 }
             });
 
@@ -2931,20 +3024,32 @@ ${contentBody}
             }
 
             selectAllContainer.style.display = 'block';
-            const availableLv3 = productData.filter(item => selectedLv2Codes.has(item.lv2));
+
+            // 데이터 소스 결정
+            const sourceData = (appRegion === 'ko') ? productData : globalExcelData;
+            if (!sourceData) return;
+
+            const availableLv3 = sourceData.filter(item => selectedLv2Codes.has(item.lv2));
             const allItemsSelected = availableLv3.length > 0 && availableLv3.every(item => selectedLv3Codes.has(item.lv3));
             selectAllCheckbox.checked = allItemsSelected;
 
+            // 중복 제거 (Global 데이터의 경우 같은 LV3가 여러 모델에 있을 수 있음)
+            const seenLv3 = new Set();
             availableLv3.forEach(item => {
+                if (seenLv3.has(item.lv3)) return;
+                seenLv3.add(item.lv3);
+
                 const div = document.createElement('div');
                 div.style.padding = "8px 5px";
                 div.style.fontSize = "11px";
                 div.style.borderBottom = "1px solid #f5f5f5";
 
+                const displayName = (appRegion === 'ko') ? `[${item.lv2Name}] ${item.lv3Name}` : `[${item.lv2}] ${item.lv3}`;
+
                 div.innerHTML = `
                     <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" value="${item.lv3}" onchange="handleLv3Change(this)" ${selectedLv3Codes.has(item.lv3) ? 'checked' : ''} style="margin: 0;">
-                        <span>[${item.lv2Name}] ${item.lv3Name} <span style="color: #888;">(${item.lv3})</span></span>
+                        <span>${displayName} <span style="color: #888;">(${item.lv3})</span></span>
                     </label>
                 `;
                 container.appendChild(div);
@@ -3014,26 +3119,32 @@ ${contentBody}
             postDataDiv.setAttribute('data-productlv3', lv3Str);
 
             let displayNames = [];
+            const sourceData = (appRegion === 'ko') ? productData : globalExcelData;
 
-            lv3Array.forEach(code => {
-                const item = productData.find(i => i.lv3 === code);
-                if (item) {
-                    displayNames.push(item.lv3Name);
-                } else {
-                    displayNames.push(code);
-                }
-            });
+            if (sourceData) {
+                lv3Array.forEach(code => {
+                    const item = sourceData.find(i => i.lv3 === code);
+                    if (item) {
+                        displayNames.push((appRegion === 'ko') ? item.lv3Name : item.lv3);
+                    } else {
+                        displayNames.push(code);
+                    }
+                });
+            }
 
             if (displayNames.length > 0) {
                 document.getElementById('inProductFamily').value = displayNames.join(", ");
             } else {
                 let lv2Names = [];
-                lv2Array.forEach(code => {
-                    const item = productData.find(i => i.lv2 === code);
-                    if (item && !lv2Names.includes(item.lv2Name)) {
-                        lv2Names.push(item.lv2Name);
-                    }
-                });
+                if (sourceData) {
+                    lv2Array.forEach(code => {
+                        const item = sourceData.find(i => i.lv2 === code);
+                        if (item) {
+                            const name = (appRegion === 'ko') ? item.lv2Name : item.lv2;
+                            if (!lv2Names.includes(name)) lv2Names.push(name);
+                        }
+                    });
+                }
                 document.getElementById('inProductFamily').value = lv2Names.length > 0 ? lv2Names.join(", ") : '';
             }
 
@@ -3052,13 +3163,55 @@ ${contentBody}
 
             // Filter Info Update
             const lv3Names = [];
-            selectedLv3Codes.forEach(code => {
-                const item = productData.find(i => i.lv3 === code);
-                if (item) lv3Names.push(item.lv3Name);
-            });
+            const sourceData = (appRegion === 'ko') ? productData : globalExcelData;
+            if (sourceData) {
+                selectedLv3Codes.forEach(code => {
+                    const item = sourceData.find(i => i.lv3 === code);
+                    if (item) lv3Names.push((appRegion === 'ko') ? item.lv3Name : item.lv3);
+                });
+            }
             document.getElementById('modelFilterInfo').textContent = "선택된 제품군: " + lv3Names.join(", ");
 
+            // 법인 필터 초기화
+            selectedCorpCd = 'ALL';
+            const corpContainer = document.getElementById('corpFilterContainer');
+            if (appRegion === 'global') {
+                corpContainer.style.display = 'block';
+                renderCorpCdFilter();
+            } else {
+                corpContainer.style.display = 'none';
+            }
+
             document.getElementById('modelModal').style.display = "block";
+            renderModelList();
+        }
+
+        function renderCorpCdFilter() {
+            const select = document.getElementById('corpCdSelect');
+            select.innerHTML = '<option value="ALL">★ ALL (전체 법인)</option>';
+
+            if (appRegion !== 'global' || !globalExcelData) return;
+
+            // 현재 선택된 제품군에 해당하는 법인 코드만 추출
+            const corps = new Set();
+            globalExcelData.forEach(item => {
+                if (selectedLv3Codes.has(item.lv3) && item.corp) {
+                    corps.add(item.corp);
+                }
+            });
+
+            // 가나다순 정렬
+            const sortedCorps = Array.from(corps).sort();
+            sortedCorps.forEach(code => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = code;
+                select.appendChild(opt);
+            });
+        }
+
+        function handleCorpCdChange(select) {
+            selectedCorpCd = select.value;
             renderModelList();
         }
 
@@ -3113,16 +3266,24 @@ ${contentBody}
 
             container.innerHTML = "";
 
-            // Check globalModelData availability
-            if (typeof globalModelData === 'undefined') {
-                container.innerHTML = '<div style="text-align:center; padding: 20px;">모델 데이터를 불러오는 중이거나 찾을 수 없습니다. (model_data.js 확인)</div>';
+            // 데이터 소스 결정
+            const currentData = (appRegion === 'ko') ? (typeof globalModelData !== 'undefined' ? globalModelData : null) : globalExcelData;
+
+            if (!currentData) {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">모델 데이터를 불러오는 중이거나 찾을 수 없습니다.</div>';
                 return;
             }
 
             // Filter models specific to selected Lv3
-            const filteredModels = globalModelData.filter(item => {
+            const filteredModels = currentData.filter(item => {
                 // Must belong to selected Lv3
                 if (!selectedLv3Codes.has(item.lv3)) return false;
+                
+                // 법인 필터 (Global 모드 전용)
+                if (appRegion === 'global' && selectedCorpCd !== 'ALL') {
+                    if (item.corp !== selectedCorpCd) return false;
+                }
+
                 // Search filter (Case-insensitive)
                 if (search && !item.model.toUpperCase().includes(search)) return false;
                 return true;
@@ -3235,9 +3396,17 @@ ${contentBody}
 
 
         let modelSet = null;
+        let lastSetRegion = null;
         function getModelSet() {
-            if (!modelSet && typeof globalModelData !== 'undefined') {
-                modelSet = new Set(globalModelData.map(item => item.model.toUpperCase()));
+            const currentRegion = appRegion;
+            const currentData = (currentRegion === 'ko') ? (typeof globalModelData !== 'undefined' ? globalModelData : null) : globalExcelData;
+
+            if (!currentData) return null;
+
+            // 지역이 바뀌었거나 아직 set이 없는 경우에만 새로 생성
+            if (!modelSet || lastSetRegion !== currentRegion) {
+                modelSet = new Set(currentData.map(item => item.model.toUpperCase()));
+                lastSetRegion = currentRegion;
             }
             return modelSet;
         }
