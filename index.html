@@ -1140,6 +1140,42 @@
         .clear-btn:hover {
             background: #999;
         }
+
+        /* 언어 선택 버튼 스타일 */
+        .lang-btn-group {
+            display: flex;
+            background: #f0f0f2;
+            padding: 4px;
+            border-radius: 30px;
+            gap: 2px;
+            border: 1px solid #e0e0e0;
+            margin-left: 15px;
+        }
+
+        .lang-btn {
+            border: none;
+            padding: 5px 18px;
+            border-radius: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            background: transparent;
+            color: #777;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .lang-btn.active {
+            background: var(--lg-red);
+            color: white;
+            box-shadow: 0 3px 8px rgba(165, 0, 52, 0.25);
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: #e8e8e8;
+            color: #444;
+        }
     </style>
 </head>
 
@@ -1157,7 +1193,15 @@
         <!-- Input Panel -->
         <div class="input-panel active notranslate" id="inputPanel">
             <h2 class="panel-title">
-                <span>Qbot HTML 변환기 / 정보 입력 (마크다운 지원)</span>
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
+                    <span>Qbot HTML 변환기 / 정보 입력 (마크다운 지원)</span>
+                    <div class="lang-btn-group">
+                        <button type="button" id="btnLangKo" class="lang-btn active"
+                            onclick="changeAppLanguage('ko')">한국</button>
+                        <button type="button" id="btnLangEn" class="lang-btn"
+                            onclick="changeAppLanguage('en')">Global</button>
+                    </div>
+                </div>
                 <span style="font-size: 11px; color: #999; font-weight: normal;">Created by n.y.h</span>
             </h2>
             <p style="font-size: 12px; color: #666; margin-bottom: 20px;">
@@ -1349,6 +1393,23 @@
     </div>
 
     <script>
+        // 언어 선택 상태 관리 (UI 토글용)
+        function changeAppLanguage(lang) {
+            const koBtn = document.getElementById('btnLangKo');
+            const enBtn = document.getElementById('btnLangEn');
+
+            if (lang === 'ko') {
+                koBtn.classList.add('active');
+                enBtn.classList.remove('active');
+            } else {
+                enBtn.classList.add('active');
+                koBtn.classList.remove('active');
+            }
+
+            // 추후 언어별 템플릿 변경 기능 확장 시 여기에 로직 추가 가능
+            console.log('Selected Language:', lang);
+        }
+
         // Custom renderer to wrap tables in .tbl-scroll div
         const renderer = new marked.Renderer();
         renderer.table = function (header, body) {
