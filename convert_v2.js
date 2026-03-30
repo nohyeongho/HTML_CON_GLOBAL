@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 // 파일 경로 설정
-const xlsxFile = 'global_model V2.xlsx';
+const xlsxFile = 'global_model V2-1.xlsx';
 const jsFile = 'global-model-data.js';
 
 console.log(`[시작] ${xlsxFile} 읽는 중...`);
