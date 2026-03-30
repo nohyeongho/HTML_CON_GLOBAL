@@ -1183,7 +1183,10 @@
         #loadingOverlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(255, 255, 255, 0.8);
             z-index: 10000;
             flex-direction: column;
@@ -1191,6 +1194,7 @@
             justify-content: center;
             font-weight: bold;
         }
+
         .spinner {
             width: 40px;
             height: 40px;
@@ -1200,7 +1204,16 @@
             animation: spin 1s linear infinite;
             margin-bottom: 15px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -1466,7 +1479,7 @@
             }
 
             console.warn('globalExcelData not found. JS file might be missing or failed to load.');
-            
+
             // 만약 로드되지 않았다면 기존처럼 수동 선택 안내만 남김 (HTML 파서 제거로 인해 수동 선택도 제약될 수 있음)
             if (confirm('Global 모델 데이터(global-model-data.js)를 찾을 수 없습니다. 파일을 확인해 주세요.')) {
                 // 수동 선택 기능은 현재 비활성화됨
@@ -2640,11 +2653,11 @@ ${contentBody}
                         if (navigator.clipboard && window.ClipboardItem) {
                             const item = new ClipboardItem({ [blob.type]: blob });
                             await navigator.clipboard.write([item]);
-                            
+
                             btn.textContent = '✅ 이미지 복사 완료 (PPT용)';
-                            setTimeout(() => { 
-                                btn.textContent = originalText; 
-                                btn.disabled = false; 
+                            setTimeout(() => {
+                                btn.textContent = originalText;
+                                btn.disabled = false;
                             }, 3000);
                         } else {
                             throw new Error('브라우저가 이미지 클립보드 복사를 지원하지 않습니다.');
@@ -2684,7 +2697,7 @@ ${contentBody}
                     el.style.minWidth = 'auto';
                 }
 
-                // 번역에 의한 변화 감지 및 자동 소스 코드 업데이트 (MutationObserver)
+                // 번역에 의한 변화 감지 및 자동 소스 코드 업데이트 
                 initTranslationObserver();
             } catch (e) {
                 console.error("번역 초기화 실패:", e);
@@ -2817,7 +2830,8 @@ ${contentBody}
                     <div id="lv2List" style="overflow-y: auto; flex: 1;">
                         <div style="color: #999; text-align: center; margin-top: 50px;">
                             데이터를 선택하거나<br>
-                            <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;" onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
+                            <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;"
+                                onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
                         </div>
                     </div>
                 </div>
@@ -2863,11 +2877,13 @@ ${contentBody}
 
             <div style="margin-bottom: 15px;">
                 <p id="modelFilterInfo" style="font-size: 14px; color: #666; margin-bottom: 5px;">선택된 제품군: 없음</p>
-                
+
                 <!-- 법인 코드 필터 (Global 모드용) -->
                 <div id="corpFilterContainer" style="margin-bottom: 10px; display: none;">
-                    <label style="font-size: 12px; font-weight: bold; margin-bottom: 3px; display: block;">법인 필터 (Corp Cd):</label>
-                    <select id="corpCdSelect" onchange="handleCorpCdChange(this)" style="width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label style="font-size: 12px; font-weight: bold; margin-bottom: 3px; display: block;">법인 필터 (Corp
+                        Cd):</label>
+                    <select id="corpCdSelect" onchange="handleCorpCdChange(this)"
+                        style="width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;">
                         <option value="ALL">★ ALL (전체 법인)</option>
                     </select>
                 </div>
@@ -2902,7 +2918,8 @@ ${contentBody}
                 <!-- Model List Items will be injected here -->
                 <div style="text-align: center; color: #999; margin-top: 100px;">
                     제품군을 먼저 선택하거나<br>
-                    <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;" onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
+                    <button class="btn-secondary" style="font-size: 11px; margin-top: 10px;"
+                        onclick="document.getElementById('excelFileInput').click()">엑셀 직접 선택</button>
                 </div>
             </div>
 
@@ -3252,7 +3269,7 @@ ${contentBody}
             const filteredModels = currentData.filter(item => {
                 // Must belong to selected Lv3
                 if (!selectedLv3Codes.has(item.lv3)) return false;
-                
+
                 // 법인 필터 (Global 모드 전용)
                 if (appRegion === 'global' && selectedCorpCd !== 'ALL') {
                     if (item.corp !== selectedCorpCd) return false;

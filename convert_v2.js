@@ -53,12 +53,12 @@ for (let i = 1; i < rawData.length; i++) {
     
     // model, lv2, lv3 모두 존재할 때만 추가 (기존 로직과 동일)
     if (model && lv2 && lv3) {
-        data.push({
-            corp:  String(corp  || 'N/A').trim(),
-            model: String(model).trim(),
-            lv2:   String(lv2).trim(),
-            lv3:   String(lv3).trim()
-        });
+        data.push([
+            String(corp  || 'N/A').trim(),
+            String(model).trim(),
+            String(lv2).trim(),
+            String(lv3).trim()
+        ]);
         count++;
         
         if (count % 50000 === 0) {
@@ -71,7 +71,10 @@ console.log(`총 유효 데이터 행 수: ${count}`);
 
 // JS 파일로 출력
 console.log(`[쓰기] ${jsFile} 작성 중...`);
-const output = `// This file is auto-generated from global_model V2.xlsx\nvar globalExcelData = ${JSON.stringify(data)};`;
+const jsonStr = JSON.stringify(data);
+const output = `// This file is auto-generated from global_model V2.xlsx\n` +
+`var globalExcelDataRaw = ${jsonStr};\n` +
+`var globalExcelData = globalExcelDataRaw.map(function(r) { return { corp: r[0], model: r[1], lv2: r[2], lv3: r[3] }; });`;
 
 fs.writeFileSync(jsFile, output, 'utf8');
 

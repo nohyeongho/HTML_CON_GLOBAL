@@ -25,12 +25,12 @@ def convert():
         lv3 = row[3]   # Column D
         
         if model and lv2 and lv3:
-            data.append({
-                "corp": str(corp).strip() if corp else "N/A",
-                "model": str(model).strip(),
-                "lv2": str(lv2).strip(),
-                "lv3": str(lv3).strip()
-            })
+            data.append([
+                str(corp).strip() if corp else "N/A",
+                str(model).strip(),
+                str(lv2).strip(),
+                str(lv3).strip()
+            ])
             count += 1
             if count % 50000 == 0:
                 print(f"Processed {count} rows...")
@@ -40,9 +40,9 @@ def convert():
     print(f"Writing to {js_file}...")
     with open(js_file, "w", encoding="utf-8") as f:
         f.write("// This file is auto-generated from global_model.xlsx\n")
-        f.write("var globalExcelData = ")
-        json.dump(data, f, ensure_ascii=False)
-        f.write(";")
+        json_str = json.dumps(data, ensure_ascii=False)
+        f.write(f"var globalExcelDataRaw = {json_str};\n")
+        f.write("var globalExcelData = globalExcelDataRaw.map(function(r) { return { corp: r[0], model: r[1], lv2: r[2], lv3: r[3] }; });\n")
     
     print("Done!")
 
