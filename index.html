@@ -94,9 +94,6 @@
             top: 0px !important;
         }
 
-        .notranslate {
-            /* 구글 번역 제외 클래스 */
-        }
 
         .ml-1 {
             margin-left: 20px !important;
@@ -1372,10 +1369,15 @@
                     <span>기기 미리보기</span>
                     <div id="google_translate_element">번역기 불러오는 중...</div>
                 </div>
-                <button id="btnCopyPreview" onclick="copyPreview()" title="미리보기 내용을 이미지로 복사하여 PPT에 붙여넣기"
-                    style="font-size: 13px; font-weight: 600; padding: 6px 14px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; margin-left: auto; transition: opacity 0.2s;"
-                    onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">📋 미리보기 복사
-                    (PPT용)</button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button id="btnHtmlViewer" onclick="openHTMLViewer()" title="생성된 HTML을 새 창에서 뷰어로 확인"
+                        style="font-size: 13px; font-weight: 600; padding: 6px 14px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; transition: opacity 0.2s;"
+                        onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🌐 HTML 뷰어</button>
+                    <button id="btnCopyPreview" onclick="copyPreview()" title="미리보기 내용을 이미지로 복사하여 PPT에 붙여넣기"
+                        style="font-size: 13px; font-weight: 600; padding: 6px 14px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; transition: opacity 0.2s;"
+                        onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">📋 미리보기 복사
+                        (PPT용)</button>
+                </div>
             </h2>
             <div class="preview-frame" id="previewContainer">
                 <div style="padding: 40px; text-align: center; color: #999;">
@@ -1393,6 +1395,29 @@
                     </div>
                 </div>
                 <textarea id="codeOutput" class="notranslate" placeholder="변환된 코드가 이곳에 표시됩니다..." readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML Viewer Input Modal -->
+    <div id="htmlViewerModal" class="modal notranslate">
+        <div class="modal-content" style="max-width: 900px; width: 90%;">
+            <span class="close-modal" onclick="closeHTMLViewerModal()">&times;</span>
+            <h2 style="margin-top: 0; border-bottom: 2px solid #2196F3; padding-bottom: 12px; margin-bottom: 20px; font-size: 24px; color: #2196F3;">
+                🌐 HTML 직접 입력 뷰어 <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 10px;">코드를 직접 붙여넣어 확인하세요</span></h2>
+            
+            <div class="modal-body">
+                <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <label style="font-weight: bold; color: #555;">HTML 소스 코드:</label>
+                    <button class="btn-secondary" onclick="loadConvertedCode()" style="padding: 5px 15px; font-size: 12px;">현 변환 코드 불러오기</button>
+                </div>
+                <textarea id="manualHtmlInput" style="width: 100%; height: 400px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 13px; resize: vertical; box-sizing: border-box;" 
+                    placeholder="여기에 HTML 코드를 붙여넣으세요..."></textarea>
+            </div>
+            
+            <div style="text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-secondary" onclick="closeHTMLViewerModal()">취소</button>
+                <button class="btn-primary" onclick="viewManualHTML()" style="background-color: #2196F3;">뷰어로 확인하기</button>
             </div>
         </div>
     </div>
@@ -2596,6 +2621,9 @@ ${contentBody}
 
             document.getElementById('codeOutput').value = fullOutputCode.trim();
 
+            // 미리보기 복사 버튼 표시 (HTML 뷰어는 항상 노출됨)
+            document.getElementById('btnCopyPreview').style.display = 'inline-block';
+
             // Auto-switch to preview tab on mobile
             if (window.innerWidth <= 768) {
                 switchTab('preview');
@@ -2679,6 +2707,51 @@ ${contentBody}
             }
         }
 
+        /**
+         * HTML 뷰어 모달 열기
+         * 왜 이렇게 짰나: 사용자가 변환된 결과뿐만 아니라 직접 코드를 편집하거나 붙여넣어 볼 수 있게 하기 위함입니다.
+         */
+        function openHTMLViewer() {
+            const modal = document.getElementById('htmlViewerModal');
+            const inputArea = document.getElementById('manualHtmlInput');
+            const currentCode = document.getElementById('codeOutput').value;
+
+            // 변환된 코드가 있다면 즉시 채워줌
+            inputArea.value = currentCode;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 모달 오픈 시 배경 스크롤 방지
+        }
+
+        function closeHTMLViewerModal() {
+            document.getElementById('htmlViewerModal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function loadConvertedCode() {
+            const currentCode = document.getElementById('codeOutput').value;
+            if (currentCode) {
+                document.getElementById('manualHtmlInput').value = currentCode;
+            } else {
+                alert('가져올 변환된 코드가 없습니다.');
+            }
+        }
+
+        /**
+         * 모달에 입력된 HTML을 새 창에서 뷰어로 띄웁니다.
+         */
+        function viewManualHTML() {
+            const htmlCode = document.getElementById('manualHtmlInput').value;
+            if (!htmlCode.trim()) {
+                alert('입력된 코드가 없습니다.');
+                return;
+            }
+
+            const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+
         // --- 구글 번역 기능 ---
         function googleTranslateElementInit() {
             window.googleTranslateElementCreated = true;
@@ -2726,6 +2799,18 @@ ${contentBody}
                 subtree: true,
                 characterData: true
             });
+        }
+
+        // 모달창 배경 클릭 시 닫기 기능 추가
+        window.onclick = function(event) {
+            const hvModal = document.getElementById('htmlViewerModal');
+            const tbModal = document.getElementById('tableModal');
+            if (event.target == hvModal) {
+                closeHTMLViewerModal();
+            }
+            if (event.target == tbModal) {
+                closeTableModal();
+            }
         }
 
         // 번역된 미리보기 내용을 소스 코드에 반영
