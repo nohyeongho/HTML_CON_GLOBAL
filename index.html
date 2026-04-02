@@ -3005,8 +3005,7 @@ ${contentBody}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <input type="checkbox" id="selectAllModels" onchange="toggleSelectAllModels(this)">
-                        <label for="selectAllModels" style="cursor: pointer; font-weight: bold; font-size: 12px;">현재 목록
-                            전체 선택</label>
+                        <label for="selectAllModels" style="cursor: pointer; font-weight: bold; font-size: 12px;">검색된 모델 전체 선택</label>
                     </div>
                     <span id="modelCountBadge" style="font-size: 12px; color: #888;">0개 선택됨</span>
                 </div>
@@ -3039,6 +3038,8 @@ ${contentBody}
         let selectedLv3Codes = new Set();
         let selectedModels = new Set();
         let selectedCorpCd = 'ALL'; // 법인 필터 상태
+        let currentFilteredModels = []; // 검색/필터된 전체 모델 유지
+        let modelRenderLimit = 500;
 
         function openProductModal() {
             document.getElementById('productModal').style.display = "block";
@@ -3071,7 +3072,12 @@ ${contentBody}
                 }
             });
 
-            lv2Map.forEach((name, code) => {
+            const sortedLv2 = Array.from(lv2Map.entries()).sort((a, b) => {
+                // a[1]: name, a[0]: code
+                return a[1].localeCompare(b[1], 'ko-KR');
+            });
+
+            sortedLv2.forEach(([code, name]) => {
                 const div = document.createElement('div');
                 div.style.padding = "8px 5px";
                 div.style.fontSize = "11px";
@@ -3123,23 +3129,29 @@ ${contentBody}
             const allItemsSelected = availableLv3.length > 0 && availableLv3.every(item => selectedLv3Codes.has(item.lv3));
             selectAllCheckbox.checked = allItemsSelected;
 
-            // 중복 제거 (Global 데이터의 경우 같은 LV3가 여러 모델에 있을 수 있음)
+            // 중복 제거 및 데이터 객체화
+            const uniqueLv3List = [];
             const seenLv3 = new Set();
             availableLv3.forEach(item => {
                 if (seenLv3.has(item.lv3)) return;
                 seenLv3.add(item.lv3);
+                const displayName = (appRegion === 'ko') ? `[${item.lv2Name}] ${item.lv3Name}` : `[${item.lv2}] ${item.lv3}`;
+                uniqueLv3List.push({ ...item, displayName });
+            });
 
+            // 표시 이름 기준 오름차순 정렬
+            uniqueLv3List.sort((a, b) => a.displayName.localeCompare(b.displayName, 'ko-KR'));
+
+            uniqueLv3List.forEach(item => {
                 const div = document.createElement('div');
                 div.style.padding = "8px 5px";
                 div.style.fontSize = "11px";
                 div.style.borderBottom = "1px solid #f5f5f5";
 
-                const displayName = (appRegion === 'ko') ? `[${item.lv2Name}] ${item.lv3Name}` : `[${item.lv2}] ${item.lv3}`;
-
                 div.innerHTML = `
                     <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" value="${item.lv3}" onchange="handleLv3Change(this)" ${selectedLv3Codes.has(item.lv3) ? 'checked' : ''} style="margin: 0;">
-                        <span>${displayName} <span style="color: #888;">(${item.lv3})</span></span>
+                        <span>${item.displayName} <span style="color: #888;">(${item.lv3})</span></span>
                     </label>
                 `;
                 container.appendChild(div);
@@ -3273,6 +3285,7 @@ ${contentBody}
             }
 
             document.getElementById('modelModal').style.display = "block";
+            modelRenderLimit = 500;
             renderModelList();
         }
 
@@ -3302,6 +3315,7 @@ ${contentBody}
 
         function handleCorpCdChange(select) {
             selectedCorpCd = select.value;
+            modelRenderLimit = 500;
             renderModelList();
         }
 
@@ -3343,7 +3357,9 @@ ${contentBody}
             const inputs = document.querySelectorAll('#modelList input[type="checkbox"]');
             inputs.forEach(input => {
                 input.checked = checkbox.checked;
-                const val = input.value;
+            });
+            currentFilteredModels.forEach(item => {
+                const val = item.model;
                 if (checkbox.checked) selectedModels.add(val);
                 else selectedModels.delete(val);
             });
@@ -3365,7 +3381,7 @@ ${contentBody}
             }
 
             // Filter models specific to selected Lv3
-            const filteredModels = currentData.filter(item => {
+            currentFilteredModels = currentData.filter(item => {
                 // Must belong to selected Lv3
                 if (!selectedLv3Codes.has(item.lv3)) return false;
 
@@ -3379,8 +3395,9 @@ ${contentBody}
                 return true;
             });
 
-            if (filteredModels.length === 0) {
+            if (currentFilteredModels.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">표시할 모델이 없습니다.</div>';
+                document.getElementById('selectAllModels').checked = false;
                 return;
             }
 
@@ -3388,8 +3405,7 @@ ${contentBody}
             const fragment = document.createDocumentFragment();
 
             // Limit rendered items for performance if too many
-            const renderLimit = 500;
-            const modelsToRender = filteredModels.slice(0, renderLimit);
+            const modelsToRender = currentFilteredModels.slice(0, modelRenderLimit);
 
             modelsToRender.forEach(item => {
                 const div = document.createElement('div');
@@ -3411,20 +3427,33 @@ ${contentBody}
 
             container.appendChild(fragment);
 
-            if (filteredModels.length > renderLimit) {
-                const msg = document.createElement('div');
-                msg.style.textAlign = 'center';
-                msg.style.padding = '10px';
-                msg.style.color = '#888';
-                msg.textContent = `${filteredModels.length - renderLimit}개의 모델이 더 있습니다. 검색어를 입력하여 좁혀보세요.`;
-                container.appendChild(msg);
+            if (currentFilteredModels.length > modelRenderLimit) {
+                const moreBtnContainer = document.createElement('div');
+                moreBtnContainer.style.textAlign = 'center';
+                moreBtnContainer.style.padding = '15px';
+                
+                const moreBtn = document.createElement('button');
+                moreBtn.className = 'btn-secondary';
+                moreBtn.style.padding = '8px 20px';
+                moreBtn.style.fontSize = '12px';
+                moreBtn.style.cursor = 'pointer';
+                moreBtn.innerHTML = `더 보기 (${currentFilteredModels.length - modelRenderLimit}개의 검색된 모델이 더 있습니다)`;
+                moreBtn.onclick = function() {
+                    modelRenderLimit += 500;
+                    renderModelList();
+                };
+                
+                moreBtnContainer.appendChild(moreBtn);
+                container.appendChild(moreBtnContainer);
             }
 
             // Reset "Select All" checkbox state
-            document.getElementById('selectAllModels').checked = false;
+            const allFilteredSelected = currentFilteredModels.length > 0 && currentFilteredModels.every(m => selectedModels.has(m.model));
+            document.getElementById('selectAllModels').checked = allFilteredSelected;
         }
 
         function filterModelList() {
+            modelRenderLimit = 500;
             renderModelList();
         }
 
@@ -3439,6 +3468,12 @@ ${contentBody}
                 selectedModels.delete(val);
             }
             updateModelCount();
+            
+            // "Select All" 체크박스 상태 업데이트
+            if(currentFilteredModels && currentFilteredModels.length > 0) {
+                const allFilteredSelected = currentFilteredModels.every(m => selectedModels.has(m.model));
+                document.getElementById('selectAllModels').checked = allFilteredSelected;
+            }
         }
 
         function updateModelCount() {
