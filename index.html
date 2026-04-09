@@ -2037,7 +2037,33 @@
             const t = d.getData('text/plain');
             const h = d.getData('text/html');
 
-            // 1. 파일 형태의 이미지 우선 확인 (캡처 도구, Office 문서 이미지 복사 등)
+            // 1. HTML 내용이 있는 경우 (PPT/엑셀 표의 병합 상태 및 글자 서식 보존을 위해 최우선)
+            if (h) {
+                e.preventDefault();
+                processHTML(h);
+                return;
+            }
+
+            // 2. 엑셀 형태의 탭 구분 텍스트인 경우 (HTML 데이터가 없는 환경에서의 차선책)
+            if (t && t.indexOf('\t') !== -1) {
+                e.preventDefault();
+                const lines = t.trim().split(/\r\n|\n|\r/), rows = lines.map(line => line.split('\t')), max = Math.max(...rows.map(r => r.length));
+                let tableHtml = `<div class="tbl-scroll">\n<table style="width: auto;" class="xfe_just_info">\n<thead>\n<tr>\n`;
+                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</th>\n`);
+                for (let j = rows[0].length; j < max; j++) tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">&nbsp;</th>\n`;
+                tableHtml += '</tr>\n</thead>\n<tbody>\n';
+                for (let i = 1; i < rows.length; i++) {
+                    tableHtml += '<tr>\n';
+                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</td>\n`);
+                    for (let j = rows[i].length; j < max; j++) tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">&nbsp;</td>\n`;
+                    tableHtml += '</tr>\n';
+                }
+                tableHtml += '</tbody>\n</table>\n</div>\n<p><br></p>\n';
+                insertHTML(tableHtml);
+                return;
+            }
+
+            // 3. 파일 형태의 이미지 확인 (캡처 도구 등 순수 이미지 전용)
             for (let item of d.items) {
                 if (item.kind === 'file' && item.type.startsWith('image/')) {
                     const file = item.getAsFile();
@@ -2058,37 +2084,65 @@
                 }
             }
 
-            // 2. 엑셀 형태의 탭 구분 텍스트인 경우 (표 변환 우선)
-            if (t && t.indexOf('\t') !== -1) {
+            // 4. 일반 평문 텍스트인 경우
+            if (t && t.trim().length > 0) {
                 e.preventDefault();
-                const lines = t.trim().split(/\r\n|\n|\r/), rows = lines.map(line => line.split('\t')), max = Math.max(...rows.map(r => r.length));
-                let tableHtml = `<div class="tbl-scroll">\n<table style="width: auto;" class="xfe_just_info">\n<thead>\n<tr>\n`;
-                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</th>\n`);
-                for (let j = rows[0].length; j < max; j++) tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">&nbsp;</th>\n`;
-                tableHtml += '</tr>\n</thead>\n<tbody>\n';
-                for (let i = 1; i < rows.length; i++) {
-                    tableHtml += '<tr>\n';
-                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</td>\n`);
-                    for (let j = rows[i].length; j < max; j++) tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">&nbsp;</td>\n`;
-                    tableHtml += '</tr>\n';
-                }
-                tableHtml += '</tbody>\n</table>\n</div>\n<p><br></p>\n';
-                insertHTML(tableHtml);
+                insertHTML(t.replace(/\n/g, '<br>'));
                 return;
             }
-            if (h) {
-                e.preventDefault();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = h;
 
-                // 불필요한 메타, 스타일 태그 제거
+            function processHTML(htmlText) {
+                // 1. Iframe을 생성하여 원본 스타일(Excel 등)을 완벽 격리된 환경에서 렌더링
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = 'none';
+                iframe.style.visibility = 'hidden';
+                document.body.appendChild(iframe);
+                
+                const doc = iframe.contentWindow.document;
+                doc.open();
+                doc.write(htmlText);
+                doc.close();
+
+                // 2. 계산된 진짜 렌더링 상태(Computed Style)를 각 셀에 기록
+                doc.querySelectorAll('td, th').forEach(el => {
+                    const comp = iframe.contentWindow.getComputedStyle(el);
+                    
+                    const bg = comp.backgroundColor;
+                    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' && bg !== 'rgb(255, 255, 255)') {
+                        el.dataset.bg = bg;
+                    }
+                    
+                    el.dataset.ta = comp.textAlign;
+                    el.dataset.va = comp.verticalAlign;
+                    el.dataset.fw = comp.fontWeight;
+                    
+                    const c = comp.color;
+                    if (c && !(c.includes('rgb(0, 0, 0)') || c.includes('rgb(34, 34, 34)') || c.includes('rgb(51, 51, 51)') || c.includes('gray'))) {
+                        el.dataset.color = c;
+                    }
+                    
+                    // 테두리 두께가 0초과이며 none이 아닌 경우만 실선으로 보존. 아니면 none 할당
+                    el.dataset.bt = (comp.borderTopStyle !== 'none' && parseFloat(comp.borderTopWidth) > 0) ? `1px solid ${comp.borderTopColor}` : 'none';
+                    el.dataset.bb = (comp.borderBottomStyle !== 'none' && parseFloat(comp.borderBottomWidth) > 0) ? `1px solid ${comp.borderBottomColor}` : 'none';
+                    el.dataset.bl = (comp.borderLeftStyle !== 'none' && parseFloat(comp.borderLeftWidth) > 0) ? `1px solid ${comp.borderLeftColor}` : 'none';
+                    el.dataset.br = (comp.borderRightStyle !== 'none' && parseFloat(comp.borderRightWidth) > 0) ? `1px solid ${comp.borderRightColor}` : 'none';
+                });
+
+                // 3. Iframe에서 분석이 끝난 DOM 추출 및 iframe 정리
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = doc.body.innerHTML;
+                document.body.removeChild(iframe);
+
+                // 4. 불필요한 메타, 스타일 태그 제거
                 tempDiv.querySelectorAll('meta, style, script, link').forEach(el => el.remove());
 
-                // 모든 요소에서 직접 서식(폰트, 크기)을 완전히 초기화하고 필요한 것만 복원
+                // 5. 모든 요소 서식 초기화 후 허용된 정보만 인라인 재조립
                 tempDiv.querySelectorAll('*').forEach(el => {
                     const tag = el.tagName.toLowerCase();
 
-                    // 1. 배경 관련 속성 강제 제거
                     el.removeAttribute('class');
                     el.removeAttribute('id');
                     el.removeAttribute('face');
@@ -2098,15 +2152,7 @@
                     el.removeAttribute('background');
 
                     if (el.style) {
-                        // 2. 색상 보존 여부 확인 (붉은색 등 포인트 컬러만 남기기)
-                        const c = el.style.color ? el.style.color.toLowerCase() : '';
-                        const isSpecial = c && !(c.includes('rgb(0, 0, 0)') || c.includes('rgb(34, 34, 34)') || c.includes('rgb(51, 51, 51)') || c.includes('#000000') || c.includes('#000') || c.includes('#333') || c.includes('gray'));
-
-                        // 3. 서식 완전 초기화 (PPT의 지저분한 인라인 스타일/그레이 배경 증발)
                         el.style.cssText = '';
-
-                        // 4. 선별적 복구
-                        if (isSpecial) el.style.color = c;
 
                         if (tag === 'img') {
                             el.style.maxWidth = '100%';
@@ -2114,16 +2160,28 @@
                         } else if (tag === 'table') {
                             el.style.width = 'auto';
                             el.style.borderCollapse = 'collapse';
-                        } else if (tag === 'td' || tag === 'th') {
-                            el.style.padding = '2px 8px';
-                            el.style.lineHeight = '1.2';
                             el.style.border = '1px solid #ccc';
+                        } else if (tag === 'td' || tag === 'th') {
+                            el.style.padding = '4px 8px';
+                            el.style.lineHeight = '1.2';
+                            
+                            // 추출한 속성들을 여기서 style로 복원
+                            if (el.dataset.bg) el.style.backgroundColor = el.dataset.bg;
+                            if (el.dataset.ta) el.style.textAlign = el.dataset.ta;
+                            if (el.dataset.va) el.style.verticalAlign = el.dataset.va;
+                            if (el.dataset.fw && el.dataset.fw !== '400' && el.dataset.fw !== 'normal') el.style.fontWeight = 'bold';
+                            if (el.dataset.color) el.style.color = el.dataset.color;
+                            
+                            if (el.dataset.bt) el.style.borderTop = el.dataset.bt;
+                            if (el.dataset.bb) el.style.borderBottom = el.dataset.bb;
+                            if (el.dataset.bl) el.style.borderLeft = el.dataset.bl;
+                            if (el.dataset.br) el.style.borderRight = el.dataset.br;
+                            
+                            ['bg','ta','va','fw','color','bt','bb','bl','br'].forEach(k => el.removeAttribute(`data-${k}`));
                         } else {
-                            // 일반 텍스트 요소: 12px 고정 및 자연스러운 줄 간격(1.6) 적용
                             el.style.fontSize = '12px';
                             el.style.backgroundColor = 'transparent';
                             el.style.lineHeight = '1.6';
-                            // 최소한의 여백 허용
                             if (tag === 'div' || tag === 'p') {
                                 el.style.marginBottom = '4px';
                             }
@@ -2142,8 +2200,8 @@
                 });
 
                 insertHTML(tempDiv.innerHTML);
-                return;
             }
+
 
 
             // 4. 일반 평문 텍스트인 경우
