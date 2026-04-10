@@ -629,7 +629,8 @@
             margin-left: 5px;
         }
 
-        .ed-toolbar-h, .ed-toolbar-w {
+        .ed-toolbar-h,
+        .ed-toolbar-w {
             width: 55px;
             height: 22px;
             border: 1px solid #ccc;
@@ -1323,7 +1324,7 @@
                             onclick="changeAppLanguage('en')">Global</button>
                     </div>
                 </div>
-                <span style="font-size: 11px; color: #999; font-weight: normal;">Created by n.y.h</span>
+                <span style="font-size: 11px; color: #999; font-weight: normal;">Created by n.y.h V2.1</span>
             </h2>
             <p style="font-size: 12px; color: #666; margin-bottom: 20px;">
                 <b>팁</b>: 이미지를 붙여넣거나(Ctrl+V), 엑셀 표를 복사해서 붙여넣어도 자동으로 변환됩니다.<br>
@@ -1485,21 +1486,26 @@
     <div id="htmlViewerModal" class="modal notranslate">
         <div class="modal-content" style="max-width: 900px; width: 90%;">
             <span class="close-modal" onclick="closeHTMLViewerModal()">&times;</span>
-            <h2 style="margin-top: 0; border-bottom: 2px solid #2196F3; padding-bottom: 12px; margin-bottom: 20px; font-size: 24px; color: #2196F3;">
-                🌐 HTML 직접 입력 뷰어 <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 10px;">코드를 직접 붙여넣어 확인하세요</span></h2>
-            
+            <h2
+                style="margin-top: 0; border-bottom: 2px solid #2196F3; padding-bottom: 12px; margin-bottom: 20px; font-size: 24px; color: #2196F3;">
+                🌐 HTML 직접 입력 뷰어 <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 10px;">코드를
+                    직접 붙여넣어 확인하세요</span></h2>
+
             <div class="modal-body">
                 <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                     <label style="font-weight: bold; color: #555;">HTML 소스 코드:</label>
-                    <button class="btn-secondary" onclick="loadConvertedCode()" style="padding: 5px 15px; font-size: 12px;">현 변환 코드 불러오기</button>
+                    <button class="btn-secondary" onclick="loadConvertedCode()"
+                        style="padding: 5px 15px; font-size: 12px;">현 변환 코드 불러오기</button>
                 </div>
-                <textarea id="manualHtmlInput" style="width: 100%; height: 400px; padding: 15px; border: 1px solid #333; border-radius: 8px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; resize: vertical; box-sizing: border-box; background: #23241f; color: #f8f8f2;" 
+                <textarea id="manualHtmlInput"
+                    style="width: 100%; height: 400px; padding: 15px; border: 1px solid #333; border-radius: 8px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; resize: vertical; box-sizing: border-box; background: #23241f; color: #f8f8f2;"
                     placeholder="여기에 HTML 코드를 붙여넣으세요..."></textarea>
             </div>
-            
+
             <div style="text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-secondary" onclick="closeHTMLViewerModal()">취소</button>
-                <button class="btn-primary" onclick="viewManualHTML()" style="background-color: #2196F3;">뷰어로 확인하기</button>
+                <button class="btn-primary" onclick="viewManualHTML()" style="background-color: #2196F3;">뷰어로
+                    확인하기</button>
             </div>
         </div>
     </div>
@@ -1512,11 +1518,14 @@
                 style="margin-top: 0; border-bottom: 2px solid var(--lg-red); padding-bottom: 12px; margin-bottom: 20px; font-size: 24px;">
                 표 삽입 <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 10px;">아래표에 직접
                     입력하세요</span></h2>
-            <div class="table-controls" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; background: #f8f8f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div class="table-controls"
+                style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; background: #f8f8f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label style="font-weight: 600; font-size: 13px;">구성:</label>
-                    <label>행 <input type="number" id="tblRows" value="3" min="1" style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
-                    <label>열 <input type="number" id="tblCols" value="2" min="1" style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+                    <label>행 <input type="number" id="tblRows" value="3" min="1"
+                            style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+                    <label>열 <input type="number" id="tblCols" value="2" min="1"
+                            style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
                 </div>
                 <div style="width: 1px; height: 24px; background: #ddd;"></div>
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -1524,17 +1533,23 @@
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <i class="fas fa-arrows-alt-v" style="color: #666; font-size: 12px;"></i>
                         <span style="font-size: 12px;">높이</span>
-                        <input type="number" id="tblTotalHeight" min="20" step="2" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" oninput="applyManualSize()">
+                        <input type="number" id="tblTotalHeight" min="20" step="2"
+                            style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"
+                            oninput="applyManualSize()">
                     </div>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <i class="fas fa-arrows-alt-h" style="color: #666; font-size: 12px;"></i>
                         <span style="font-size: 12px;">너비</span>
-                        <input type="number" id="tblTotalWidth" min="20" step="2" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" oninput="applyManualSize()">
+                        <input type="number" id="tblTotalWidth" min="20" step="2"
+                            style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"
+                            oninput="applyManualSize()">
                     </div>
                 </div>
-                <button class="btn-secondary" onclick="generateVisualTable()" style="padding: 5px 12px; font-size: 12px; margin-left: auto;">표 초기화</button>
+                <button class="btn-secondary" onclick="generateVisualTable()"
+                    style="padding: 5px 12px; font-size: 12px; margin-left: auto;">표 초기화</button>
             </div>
-            <div style="font-size: 11px; color: #888; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+            <div
+                style="font-size: 11px; color: #888; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
                 <i class="fas fa-info-circle"></i>
                 <span>마우스로 테두리를 잡고 조절하거나 위 입력창에 숫자를 직접 입력하세요. (PPT 동일 방식)</span>
             </div>
@@ -1728,7 +1743,7 @@
                 if (node) {
                     const fs = window.getComputedStyle(node).fontSize;
                     const selects = document.querySelectorAll('.font-size-select');
-                    
+
                     // 수동 변경 직후라면 자동 동기화를 한 번 건너뜀 (사용자 선택 유지)
                     if (window.isManualFontSizeChange) {
                         return;
@@ -1778,7 +1793,7 @@
                 if (range.collapsed) {
                     const span = document.createElement('span');
                     span.style.fontSize = val;
-                    span.appendChild(document.createTextNode('\u200B')); 
+                    span.appendChild(document.createTextNode('\u200B'));
                     range.insertNode(span);
                     range.setStart(span.firstChild, 1); // ZWSP 뒤로
                     range.collapse(true);
@@ -1952,12 +1967,12 @@
                     edStartImgW = iRect.width;
                     // 기존에 박혀있을 수 있는 고정 width 속성 제거 (스타일 우선 적용을 위해)
                     img.removeAttribute('width');
-                    img.style.height = 'auto'; 
+                    img.style.height = 'auto';
                     if (isLeft && isTop) edImgCorner = 'tl';
                     else if (isRight && isTop) edImgCorner = 'tr';
                     else if (isLeft && isBottom) edImgCorner = 'bl';
                     else if (isRight && isBottom) edImgCorner = 'br';
-                    
+
                     document.body.style.userSelect = 'none';
                     e.preventDefault();
                     return;
@@ -1973,11 +1988,11 @@
         function updateActiveElementForToolbar(el) {
             edActiveElement = el;
             if (!el) return;
-            
+
             // 모든 에디터 툴바의 수치를 동기화하여 사용자 혼동 방지
             const w = Math.round(el.offsetWidth);
             const h = Math.round(el.offsetHeight);
-            
+
             document.querySelectorAll('.ed-toolbar-w').forEach(inp => inp.value = w);
             document.querySelectorAll('.ed-toolbar-h').forEach(inp => inp.value = h);
         }
@@ -2021,12 +2036,12 @@
             const tbl = edTargetCell.closest('table');
             if (!tbl) return;
             edIsColResizing = true;
-            
+
             // 핵심: 리사이즈를 방해하는 모든 제약 해제 (줄바꿈 허용 포함)
             tbl.querySelectorAll('td, th').forEach(c => {
                 c.style.minWidth = '0';
                 c.style.maxWidth = 'none';
-                c.style.whiteSpace = 'normal'; 
+                c.style.whiteSpace = 'normal';
             });
 
             const colIdx = edTargetCell.cellIndex;
@@ -2049,7 +2064,7 @@
         function edStartRowResize() {
             if (!edTargetRow) return;
             edIsRowResizing = true;
-            
+
             const tbl = edTargetRow.closest('table');
             tbl.querySelectorAll('tr, td, th').forEach(el => {
                 el.style.minHeight = '0';
@@ -3120,7 +3135,7 @@ ${contentBody}
 
             // 변환된 코드가 있다면 즉시 채워줌
             inputArea.value = currentCode;
-            
+
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden'; // 모달 오픈 시 배경 스크롤 방지
         }
@@ -3204,7 +3219,7 @@ ${contentBody}
         }
 
         // 모달창 배경 클릭 시 닫기 기능 추가
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const hvModal = document.getElementById('htmlViewerModal');
             const tbModal = document.getElementById('tableModal');
             if (event.target == hvModal) {
@@ -3821,18 +3836,18 @@ ${contentBody}
                 const moreBtnContainer = document.createElement('div');
                 moreBtnContainer.style.textAlign = 'center';
                 moreBtnContainer.style.padding = '15px';
-                
+
                 const moreBtn = document.createElement('button');
                 moreBtn.className = 'btn-secondary';
                 moreBtn.style.padding = '8px 20px';
                 moreBtn.style.fontSize = '12px';
                 moreBtn.style.cursor = 'pointer';
                 moreBtn.innerHTML = `더 보기 (${currentFilteredModels.length - modelRenderLimit}개의 검색된 모델이 더 있습니다)`;
-                moreBtn.onclick = function() {
+                moreBtn.onclick = function () {
                     modelRenderLimit += 500;
                     renderModelList();
                 };
-                
+
                 moreBtnContainer.appendChild(moreBtn);
                 container.appendChild(moreBtnContainer);
             }
