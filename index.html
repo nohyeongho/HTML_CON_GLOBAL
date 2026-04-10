@@ -418,7 +418,8 @@
         .app-container {
             display: flex;
             gap: 20px;
-            max-width: 1600px;
+            max-width: 2400px;
+            width: 98%;
             margin: 0 auto;
         }
 
@@ -2420,13 +2421,13 @@
                 e.preventDefault();
                 const lines = t.trim().split(/\r\n|\n|\r/), rows = lines.map(line => line.split('\t')), max = Math.max(...rows.map(r => r.length));
                 let tableHtml = `<div class="tbl-scroll">\n<table style="width: auto;" class="xfe_just_info">\n<thead>\n<tr>\n`;
-                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${c || '&nbsp;'}</th>\n`);
+                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${(c || "").trim() || '&nbsp;'}</th>\n`);
                 for (let j = rows[0].length; j < max; j++) tableHtml += `<th style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">&nbsp;</th>\n`;
                 tableHtml += '</tr>\n</thead>\n<tbody>\n';
                 for (let i = 1; i < rows.length; i++) {
                     tableHtml += '<tr>\n';
-                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${c || '&nbsp;'}</td>\n`);
-                    for (let j = rows[i].length; j < max; j++) tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">&nbsp;</td>\n`;
+                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${(c || "").trim() || '&nbsp;'}</td>\n`);
+                    for (let j = rows[i].length; j < max; j++) tableHtml += `<td style="padding: 2px 4px; line-height: 1.2;">&nbsp;</td>\n`;
                     tableHtml += '</tr>\n';
                 }
                 tableHtml += '</tbody>\n</table>\n</div>\n<p><br></p>\n';
@@ -2502,6 +2503,7 @@
                     const tag = el.tagName.toLowerCase();
                     el.removeAttribute('class'); el.removeAttribute('id');
                     el.removeAttribute('face'); el.removeAttribute('size');
+                    el.removeAttribute('width'); el.removeAttribute('height');
                     if (el.style) {
                         el.style.cssText = '';
                         if (tag === 'img') {
@@ -2510,7 +2512,9 @@
                             el.style.width = 'auto'; el.style.borderCollapse = 'collapse';
                         } else if (tag === 'td' || tag === 'th' || tag === 'col' || tag === 'tr') {
                             if (tag === 'td' || tag === 'th') {
-                                el.style.padding = '2px 4px'; el.style.lineHeight = '1.1'; el.style.fontSize = '13px';
+                                // 셀 내부 텍스트의 좌우 공백 제거 (사용자 요청: 여백 최소화)
+                                el.innerHTML = el.innerHTML.replace(/&nbsp;/g, ' ').trim().replace(/ +/g, ' ');
+                                el.style.padding = '2px 4px'; el.style.lineHeight = '1.2'; el.style.fontSize = '13px';
                                 el.style.border = '1px solid #ccc';
                                 el.style.textAlign = 'center'; // 가운데 정렬 강제
                                 el.style.verticalAlign = 'middle'; // 수직 중앙 강제
