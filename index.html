@@ -159,14 +159,8 @@
         .content-service-view ol,
         .content-service-view ul {
             margin: 0 0 20px;
-            padding: 0 0 0 20px;
-            list-style: disc;
-        }
-
-        .content-service-view ol {
-            margin: 0 0 20px;
-            padding: 0 0 0 20px;
-            list-style: decimal;
+            padding: 0;
+            list-style: none;
         }
 
         .content-service-view [class^="iframe-wrap"] {
@@ -291,8 +285,14 @@
             text-indent: 0;
         }
 
+        .img-only {
+            display: inline-block !important;
+            vertical-align: top;
+            margin: 0 10px 10px 0;
+        }
+
         .content-service-view .img-only {
-            margin: 0 0 20px;
+            margin-bottom: 20px;
         }
 
         .content-service-view .img-only img {
@@ -369,33 +369,29 @@
             margin: 0 0 15px;
         }
 
-        .content-service-view table {
+        .content-service-view .tbl-scroll table {
             border-collapse: collapse;
-        }
-
-        .content-service-view td,
-        .content-service-view th {
-            padding: 7px;
-            border: 1px solid #ccc;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 14px;
-            line-height: 1.6;
         }
 
         .content-service-view .tbl-scroll td,
         .content-service-view .tbl-scroll th {
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            text-align: center;
             white-space: nowrap;
+            vertical-align: middle;
+            font-size: 13px;
+            line-height: 1.1;
         }
 
-        .content-service-view th {
+        .content-service-view .tbl-scroll th {
             font-size: 15px;
             font-weight: 600;
             background: #ddd;
         }
 
         @media screen and (max-width: 768px) {
-            .content-service-view table[style*="width: 600px"] {
+            .content-service-view .tbl-scroll table[style*="width: 600px"] {
                 width: 100% !important;
             }
         }
@@ -605,7 +601,73 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            line-height: 1;
+            line-height: normal;
+        }
+
+        .color-bar {
+            width: 14px;
+            height: 3px;
+            margin-top: 1px;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 18px;
+            background: #eee;
+            margin: 0 4px;
+        }
+
+        .toolbar-size-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #fdfdfd;
+            padding: 0 6px;
+            height: 28px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            margin-left: 5px;
+        }
+
+        .ed-toolbar-h, .ed-toolbar-w {
+            width: 55px;
+            height: 22px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 0 2px 0 4px;
+            font-size: 11px;
+            color: #333;
+            text-align: right;
+            outline: none;
+        }
+
+        /* 크롬/사파리에서 숫자 버튼 항상 보이기 */
+        .ed-toolbar-h::-webkit-inner-spin-button,
+        .ed-toolbar-h::-webkit-outer-spin-button,
+        .ed-toolbar-w::-webkit-inner-spin-button,
+        .ed-toolbar-w::-webkit-outer-spin-button {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .toolbar-label {
+            font-size: 11px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .img-only {
+            display: inline-block;
+            vertical-align: top;
+            max-width: 100%;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .img-only img {
+            max-width: 100%;
+            height: auto;
+            display: block;
         }
 
         .color-icon-wrapper b {
@@ -702,25 +764,32 @@
 
         .editor-content-view img {
             max-width: 100%;
-            display: block;
-            margin: 10px 0;
+            display: inline-block;
+            vertical-align: top;
+            margin: 0 10px 10px 0;
         }
 
+        .content-service-view table,
         .editor-content-view table {
-            table-layout: fixed;
-            width: 100%;
+            table-layout: auto;
+            width: auto;
+            min-width: 0;
             border-collapse: collapse;
             box-sizing: border-box;
+            margin: 10px 0;
         }
 
         .editor-content-view td,
         .editor-content-view th {
             border: 1px solid #ccc;
-            padding: 4px 8px;
-            min-width: 40px;
+            padding: 2px 4px;
+            min-width: 0;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 13px;
+            line-height: 1.1;
             word-break: break-all;
             overflow-wrap: break-word;
-            vertical-align: top;
         }
 
         .editor-content-view:empty:before {
@@ -824,14 +893,12 @@
             width: 100%;
             height: 200px;
             padding: 10px;
-            background: #23241f;
-            color: #f8f8f2;
-            border: 1px solid #333;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #f8f8f8;
+            border: 1px solid #ccc;
+            font-family: monospace;
             font-size: 12px;
             white-space: pre;
             overflow: auto;
-            border-radius: 4px;
         }
 
         .preview-frame {
@@ -1062,8 +1129,8 @@
         .visual-table td,
         .visual-table th {
             border: 1px solid #999;
-            padding: 6px 8px;
-            min-width: 60px;
+            padding: 6px 2px;
+            min-width: 20px;
             vertical-align: top;
             position: relative;
         }
@@ -1445,13 +1512,31 @@
                 style="margin-top: 0; border-bottom: 2px solid var(--lg-red); padding-bottom: 12px; margin-bottom: 20px; font-size: 24px;">
                 표 삽입 <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 10px;">아래표에 직접
                     입력하세요</span></h2>
-            <div class="table-controls">
-                <label>행(Row): <input type="number" id="tblRows" value="3" min="1"
-                        style="width: 50px; border:1px solid #ccc;"></label>
-                <label>열(Col): <input type="number" id="tblCols" value="2" min="1"
-                        style="width: 50px; border:1px solid #ccc;"></label>
-                <button class="btn-secondary" onclick="generateVisualTable()">표 생성/초기화</button>
-                <span style="font-size:12px; color:#999; margin-left:8px;">💡 셀 테두리를 드래그하면 크기를 조절할 수 있습니다</span>
+            <div class="table-controls" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; background: #f8f8f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: 600; font-size: 13px;">구성:</label>
+                    <label>행 <input type="number" id="tblRows" value="3" min="1" style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+                    <label>열 <input type="number" id="tblCols" value="2" min="1" style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+                </div>
+                <div style="width: 1px; height: 24px; background: #ddd;"></div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <label style="font-weight: 600; font-size: 13px;">크기 조정 (px):</label>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-arrows-alt-v" style="color: #666; font-size: 12px;"></i>
+                        <span style="font-size: 12px;">높이</span>
+                        <input type="number" id="tblTotalHeight" min="20" step="2" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" oninput="applyManualSize()">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-arrows-alt-h" style="color: #666; font-size: 12px;"></i>
+                        <span style="font-size: 12px;">너비</span>
+                        <input type="number" id="tblTotalWidth" min="20" step="2" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" oninput="applyManualSize()">
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="generateVisualTable()" style="padding: 5px 12px; font-size: 12px; margin-left: auto;">표 초기화</button>
+            </div>
+            <div style="font-size: 11px; color: #888; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                <i class="fas fa-info-circle"></i>
+                <span>마우스로 테두리를 잡고 조절하거나 위 입력창에 숫자를 직접 입력하세요. (PPT 동일 방식)</span>
             </div>
             <div id="visualTableContainer" style="overflow-x:auto; max-height:400px; overflow-y:auto;">
                 <!-- Visual Table will be generated here -->
@@ -1593,16 +1678,24 @@
             <button onclick="insertFormat('insertUnorderedList')" onmousedown="event.preventDefault()"><i class="fas fa-list-ul"></i></button>
             <button onclick="insertFormat('insertOrderedList')" onmousedown="event.preventDefault()"><i class="fas fa-list-ol"></i></button>
             <button onclick="openTableModal(event)" onmousedown="event.preventDefault()"><i class="fas fa-table"></i></button>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-size-group">
+                <span class="toolbar-label">크기:</span>
+                <i class="fas fa-arrows-alt-v" style="font-size:10px; color:#aaa;"></i>
+                <input type="number" class="ed-toolbar-h" placeholder="높이" step="2" title="높이(px)" oninput="applyManualSizeToElement(this, 'height')" onmousedown="event.stopPropagation()">
+                <i class="fas fa-arrows-alt-h" style="font-size:10px; color:#aaa;"></i>
+                <input type="number" class="ed-toolbar-w" placeholder="너비" step="2" title="너비(px)" oninput="applyManualSizeToElement(this, 'width')" onmousedown="event.stopPropagation()">
+            </div>
         `;
 
         // --- Editor Core ---
         let lastFocusedEditor = null, selectionRange = null, activeToolbar = null, activeColorType = 'foreColor';
         let isRestoringSelection = false;
         // Editor Table Resize Variables
-        let edIsRowResizing = false, edIsColResizing = false;
-        let edStartX, edStartY, edStartW, edStartH, edStartTableW;
-        let edTargetCell = null, edTargetRow = null;
-        let edIsPendingColResize = false, edIsPendingRowResize = false;
+        let edIsRowResizing = false, edIsColResizing = false, edIsImgResizing = false;
+        let edStartX, edStartY, edStartW, edStartH, edStartTableW, edStartImgW;
+        let edTargetCell = null, edTargetRow = null, edTargetImg = null, edImgCorner = '';
+        let edIsPendingColResize = false, edIsPendingRowResize = false, edIsPendingImgResize = false;
 
         function saveSelectionState() {
             if (isRestoringSelection) return;
@@ -1768,38 +1861,144 @@
         initColorPicker();
 
         // --- Editor Content Table Resize (Row & Column) ---
-        document.addEventListener('mousedown', function (e) {
+        let edNextStartW = 0, edNextRowStartH = 0;
+        window.addEventListener('mousedown', function (e) {
             const cell = e.target.closest('.editor-content-view td, .editor-content-view th');
-            if (!cell) return;
-            const rect = cell.getBoundingClientRect();
-            const isRightEdge = Math.abs(e.clientX - rect.right) < 8;
-            const isLeftEdge = Math.abs(e.clientX - rect.left) < 8;
-            const isBottomEdge = Math.abs(e.clientY - rect.bottom) < 8;
-            const tbl = cell.closest('table');
-            if (!tbl) return;
-            if (isRightEdge || isLeftEdge || isBottomEdge) {
-                edStartX = e.clientX;
-                edStartY = e.clientY;
-                if (isRightEdge || isLeftEdge) {
-                    edIsPendingColResize = true;
-                    edTargetCell = isRightEdge ? cell : cell.previousElementSibling;
-                } else {
-                    edIsPendingRowResize = true;
-                    edTargetRow = cell.parentElement;
+            if (cell) {
+                const rect = cell.getBoundingClientRect();
+                const isRightEdge = Math.abs(e.clientX - rect.right) < 10;
+                const isLeftEdge = Math.abs(e.clientX - rect.left) < 10;
+                const isBottomEdge = Math.abs(e.clientY - rect.bottom) < 10;
+                const tbl = cell.closest('table');
+                if (!tbl) return;
+
+                // --- Editor Element Tracking (단순 클릭 시에도 툴바 업데이트) ---
+                updateActiveElementForToolbar(tbl);
+
+                if (isRightEdge || isLeftEdge || isBottomEdge) {
+                    edStartX = e.clientX;
+                    edStartY = e.clientY;
+                    if (isRightEdge || isLeftEdge) {
+                        edIsPendingColResize = true;
+                        // 왼쪽 경계선을 잡았을 경우 이전 셀을 타겟팅
+                        edTargetCell = isRightEdge ? cell : cell.previousElementSibling;
+                        if (!edTargetCell && isLeftEdge) edTargetCell = cell;
+                    }
+                    if (isBottomEdge) {
+                        edIsPendingRowResize = true;
+                        edTargetRow = cell.parentElement;
+                    }
+                    document.body.style.userSelect = 'none';
+                    return;
                 }
-                document.body.style.userSelect = 'none';
+            }
+
+            // --- Editor Image Resize Initial ---
+            const img = e.target.closest('.editor-content-view img');
+            if (img) {
+                const iRect = img.getBoundingClientRect();
+                const pad = 20;
+                const isL = e.clientX < iRect.left + pad;
+                const isR = e.clientX > iRect.right - pad;
+                const isT = e.clientY < iRect.top + pad;
+                const isB = e.clientY > iRect.bottom + pad; // Wait, rect.bottom is absolute, so e.clientY > rect.bottom - pad is correct
+                // Correct coordinate check:
+                const isLeft = (e.clientX - iRect.left) < pad;
+                const isRight = (iRect.right - e.clientX) < pad;
+                const isTop = (e.clientY - iRect.top) < pad;
+                const isBottom = (iRect.bottom - e.clientY) < pad;
+
+                if ((isLeft || isRight) && (isTop || isBottom)) {
+                    updateActiveElementForToolbar(img);
+                    edStartX = e.clientX;
+                    edIsPendingImgResize = true;
+                    edTargetImg = img;
+                    edStartImgW = iRect.width;
+                    // 기존에 박혀있을 수 있는 고정 width 속성 제거 (스타일 우선 적용을 위해)
+                    img.removeAttribute('width');
+                    img.style.height = 'auto'; 
+                    if (isLeft && isTop) edImgCorner = 'tl';
+                    else if (isRight && isTop) edImgCorner = 'tr';
+                    else if (isLeft && isBottom) edImgCorner = 'bl';
+                    else if (isRight && isBottom) edImgCorner = 'br';
+                    
+                    document.body.style.userSelect = 'none';
+                    e.preventDefault();
+                    return;
+                } else {
+                    // 리사이즈 영역은 아니지만 이미지를 클릭했을 때 툴바 값 업데이트
+                    updateActiveElementForToolbar(img);
+                }
             }
         });
+
+        let edActiveElement = null; // 현재 선택된 리사이즈 대상 (표/이미지)
+
+        function updateActiveElementForToolbar(el) {
+            edActiveElement = el;
+            if (!el) return;
+            
+            // 모든 에디터 툴바의 수치를 동기화하여 사용자 혼동 방지
+            const w = Math.round(el.offsetWidth);
+            const h = Math.round(el.offsetHeight);
+            
+            document.querySelectorAll('.ed-toolbar-w').forEach(inp => inp.value = w);
+            document.querySelectorAll('.ed-toolbar-h').forEach(inp => inp.value = h);
+        }
+
+        function applyManualSizeToElement(input, type) {
+            if (!edActiveElement) return;
+            const val = input.value;
+            if (!val) return;
+
+            if (edActiveElement.tagName === 'TABLE') {
+                if (type === 'width') {
+                    edActiveElement.style.width = val + 'px';
+                    edActiveElement.style.tableLayout = 'fixed';
+                    // 첫 번째 행의 셀 너비들도 균형있게 조정 (에디터 내 테이블 특성)
+                    const firstRow = edActiveElement.rows[0];
+                    if (firstRow) {
+                        const cellCount = firstRow.cells.length;
+                        const avgW = val / cellCount;
+                        for (let c of firstRow.cells) c.style.width = avgW + 'px';
+                    }
+                } else {
+                    edActiveElement.style.height = val + 'px';
+                    const avgH = val / edActiveElement.rows.length;
+                    for (let row of edActiveElement.rows) {
+                        row.style.height = avgH + 'px';
+                        for (let cell of row.cells) cell.style.height = avgH + 'px';
+                    }
+                }
+            } else if (edActiveElement.tagName === 'IMG') {
+                if (type === 'width') {
+                    edActiveElement.style.width = val + 'px';
+                    edActiveElement.setAttribute('width', val);
+                } else {
+                    edActiveElement.style.height = val + 'px';
+                }
+            }
+        }
 
         function edStartColResize(e) {
             if (!edTargetCell) return;
             const tbl = edTargetCell.closest('table');
             if (!tbl) return;
             edIsColResizing = true;
+            
+            // 핵심: 리사이즈를 방해하는 모든 제약 해제 (줄바꿈 허용 포함)
+            tbl.querySelectorAll('td, th').forEach(c => {
+                c.style.minWidth = '0';
+                c.style.maxWidth = 'none';
+                c.style.whiteSpace = 'normal'; 
+            });
+
+            const colIdx = edTargetCell.cellIndex;
             const cellRect = edTargetCell.getBoundingClientRect();
-            const tblRect = tbl.getBoundingClientRect();
             edStartW = cellRect.width;
+            const tblRect = tbl.getBoundingClientRect();
             edStartTableW = tblRect.width;
+
             const firstRow = tbl.rows[0];
             if (firstRow) {
                 for (let i = 0; i < firstRow.cells.length; i++) {
@@ -1814,51 +2013,119 @@
         function edStartRowResize() {
             if (!edTargetRow) return;
             edIsRowResizing = true;
+            
+            const tbl = edTargetRow.closest('table');
+            tbl.querySelectorAll('tr, td, th').forEach(el => {
+                el.style.minHeight = '0';
+                el.style.maxHeight = 'none';
+            });
+
             edStartH = edTargetRow.offsetHeight;
+            const nextRow = edTargetRow.nextElementSibling;
+            edNextRowStartH = nextRow ? nextRow.offsetHeight : 0;
             document.body.style.cursor = 'ns-resize';
         }
 
         let edMouseTimer = null;
         window.addEventListener('mousemove', function (e) {
             const curX = e.clientX, curY = e.clientY;
+
+            if (e.buttons === 0 && (edIsColResizing || edIsRowResizing || edIsImgResizing || edIsPendingColResize || edIsPendingRowResize || edIsPendingImgResize)) {
+                edIsColResizing = edIsRowResizing = edIsImgResizing = false;
+                edIsPendingColResize = edIsPendingRowResize = edIsPendingImgResize = false;
+                document.body.style.cursor = ''; document.body.style.userSelect = '';
+                return;
+            }
+
             if (edMouseTimer) return;
             edMouseTimer = requestAnimationFrame(function () {
-                // Threshold check before starting resize
-                if (!edIsColResizing && !edIsRowResizing) {
+                if (!edIsColResizing && !edIsRowResizing && !edIsImgResizing) {
                     if (edIsPendingColResize || edIsPendingRowResize) {
                         const dist = Math.sqrt(Math.pow(curX - edStartX, 2) + Math.pow(curY - edStartY, 2));
                         if (dist > 3) {
                             if (edIsPendingColResize) edStartColResize(e);
-                            else if (edIsPendingRowResize) edStartRowResize();
+                            if (edIsPendingRowResize) edStartRowResize();
+                        }
+                    } else if (edIsPendingImgResize && edTargetImg) {
+                        const dist = Math.abs(curX - edStartX);
+                        if (dist > 3) {
+                            edIsImgResizing = true;
+                            document.body.style.cursor = 'nwse-resize';
                         }
                     }
                 }
-                // Column resize
-                if (edIsColResizing && edTargetCell) {
+
+                if (edIsImgResizing && edTargetImg) {
                     const diff = curX - edStartX;
-                    const newW = Math.max(30, edStartW + diff);
-                    const tbl = edTargetCell.closest('table');
-                    if (tbl && tbl.rows.length > 0) {
-                        const colIdx = edTargetCell.cellIndex;
-                        const masterCell = tbl.rows[0].cells[colIdx];
-                        if (masterCell) masterCell.style.width = newW + 'px';
-                        tbl.style.width = (edStartTableW + (newW - edStartW)) + 'px';
+                    let newW = edStartImgW;
+                    if (edImgCorner === 'tr' || edImgCorner === 'br') {
+                        newW = edStartImgW + diff;
+                    } else if (edImgCorner === 'tl' || edImgCorner === 'bl') {
+                        newW = edStartImgW - diff;
                     }
-                } else if (edIsRowResizing && edTargetRow) {
-                    const diff = curY - edStartY;
-                    const newH = Math.max(24, edStartH + diff);
-                    edTargetRow.style.height = newH + 'px';
-                    for (let i = 0; i < edTargetRow.cells.length; i++) {
-                        edTargetRow.cells[i].style.height = newH + 'px';
+                    const finalW = Math.max(30, newW);
+                    edTargetImg.style.width = finalW + 'px';
+                    edTargetImg.setAttribute('width', finalW);
+                    updateActiveElementForToolbar(edTargetImg);
+                } else {
+                    if (edIsColResizing && edTargetCell) {
+                        const diff = curX - edStartX;
+                        const tbl = edTargetCell.closest('table');
+                        if (tbl && tbl.rows.length > 0) {
+                            const colIdx = edTargetCell.cellIndex;
+                            const newW = Math.max(30, edStartW + diff);
+                            const masterCell = tbl.rows[0].cells[colIdx];
+                            if (masterCell) masterCell.style.width = newW + 'px';
+                            tbl.style.width = (edStartTableW + (newW - edStartW)) + 'px';
+                            updateActiveElementForToolbar(tbl);
+                        }
                     }
-                } else if (!edIsColResizing && !edIsRowResizing) {
-                    // Cursor feedback on edges
+                    if (edIsRowResizing && edTargetRow) {
+                        const diff = curY - edStartY;
+                        const newH = Math.max(24, edStartH + diff);
+                        edTargetRow.style.height = newH + 'px';
+                        for (let i = 0; i < edTargetRow.cells.length; i++) {
+                            edTargetRow.cells[i].style.height = newH + 'px';
+                        }
+                        updateActiveElementForToolbar(edTargetRow.closest('table'));
+                    }
+                }
+
+                if (!edIsColResizing && !edIsRowResizing && !edIsImgResizing) {
+                    const img = e.target.closest('.editor-content-view img');
+                    if (img) {
+                        const iRect = img.getBoundingClientRect();
+                        const pad = 20;
+                        const isLeft = (curX - iRect.left) < pad;
+                        const isRight = (iRect.right - curX) < pad;
+                        const isTop = (curY - iRect.top) < pad;
+                        const isBottom = (iRect.bottom - curY) < pad;
+
+                        if ((isLeft && isTop) || (isRight && isBottom)) {
+                            img.style.cursor = 'nwse-resize';
+                        } else if ((isRight && isTop) || (isLeft && isBottom)) {
+                            img.style.cursor = 'nesw-resize';
+                        } else {
+                            img.style.cursor = '';
+                        }
+                    }
+
                     const cell = e.target.closest('.editor-content-view td, .editor-content-view th');
                     if (cell) {
                         const rect = cell.getBoundingClientRect();
-                        const isEdgeX = Math.abs(curX - rect.right) < 8 || Math.abs(curX - rect.left) < 8;
-                        const isEdgeY = Math.abs(curY - rect.bottom) < 8;
-                        cell.style.cursor = isEdgeX ? 'ew-resize' : isEdgeY ? 'ns-resize' : '';
+                        const isRight = Math.abs(curX - rect.right) < 10;
+                        const isLeft = Math.abs(curX - rect.left) < 10;
+                        const isBottom = Math.abs(curY - rect.bottom) < 10;
+
+                        if (isBottom && (isRight || isLeft)) {
+                            cell.style.cursor = isRight ? 'nwse-resize' : 'nesw-resize';
+                        } else if (isRight || isLeft) {
+                            cell.style.cursor = 'ew-resize';
+                        } else if (isBottom) {
+                            cell.style.cursor = 'ns-resize';
+                        } else {
+                            cell.style.cursor = '';
+                        }
                     }
                 }
                 edMouseTimer = null;
@@ -1866,14 +2133,9 @@
         });
 
         window.addEventListener('mouseup', function () {
-            edIsColResizing = false;
-            edIsRowResizing = false;
-            edIsPendingColResize = false;
-            edIsPendingRowResize = false;
-            edTargetCell = null;
-            edTargetRow = null;
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
+            edIsColResizing = edIsRowResizing = edIsImgResizing = false;
+            edIsPendingColResize = edIsPendingRowResize = edIsPendingImgResize = false;
+            document.body.style.cursor = ''; document.body.style.userSelect = '';
         });
 
         // --- Table Modal Logic ---
@@ -1894,6 +2156,32 @@
             if (event.target === document.getElementById('tableModal')) closeTableModal();
         };
 
+        // --- Table Size Input Sync ---
+        function syncSizeInputs(tbl) {
+            if (!tbl) return;
+            document.getElementById('tblTotalWidth').value = Math.round(tbl.offsetWidth);
+            document.getElementById('tblTotalHeight').value = Math.round(tbl.offsetHeight);
+        }
+
+        function applyManualSize() {
+            const tbl = document.querySelector('.visual-table');
+            if (!tbl) return;
+            const w = document.getElementById('tblTotalWidth').value;
+            const h = document.getElementById('tblTotalHeight').value;
+
+            if (w) tbl.style.width = w + 'px';
+            if (h) {
+                tbl.style.height = h + 'px';
+                // 행 높이 균등 분할
+                const rowH = h / tbl.rows.length;
+                for (let row of tbl.rows) {
+                    row.style.height = rowH + 'px';
+                    for (let cell of row.cells) cell.style.height = rowH + 'px';
+                }
+            }
+            tbl.style.tableLayout = 'fixed';
+        }
+
         function generateVisualTable() {
             const r = parseInt(document.getElementById('tblRows').value);
             const c = parseInt(document.getElementById('tblCols').value);
@@ -1905,6 +2193,11 @@
             }
             h += '</tbody></table>';
             document.getElementById('visualTableContainer').innerHTML = h;
+
+            const tbl = document.querySelector('.visual-table');
+            if (tbl) {
+                requestAnimationFrame(() => syncSizeInputs(tbl));
+            }
             initTableResize();
         }
 
@@ -1942,9 +2235,9 @@
                 const cell = e.target.closest('td, th');
                 if (!cell || !container.contains(cell)) return;
                 const rect = cell.getBoundingClientRect();
-                const isRight = Math.abs(e.clientX - rect.right) < 8;
-                const isLeft = Math.abs(e.clientX - rect.left) < 8;
-                const isBottom = Math.abs(e.clientY - rect.bottom) < 8;
+                const isRight = Math.abs(e.clientX - rect.right) < 10;
+                const isLeft = Math.abs(e.clientX - rect.left) < 10;
+                const isBottom = Math.abs(e.clientY - rect.bottom) < 10;
                 const tbl = cell.closest('table');
                 if (!tbl) return;
                 if (isRight || isLeft || isBottom) {
@@ -1952,7 +2245,8 @@
                     if (isRight || isLeft) {
                         isPendingTblColResize = true;
                         tblTargetCell = isRight ? cell : cell.previousElementSibling;
-                    } else {
+                    }
+                    if (isBottom) {
                         isPendingTblRowResize = true;
                         tblTargetRow = cell.parentElement;
                     }
@@ -1983,10 +2277,13 @@
                                 tbl.style.width = tblStartTableW.toFixed(2) + 'px';
                                 tbl.style.tableLayout = 'fixed';
                                 document.body.style.cursor = 'ew-resize';
-                            } else if (isPendingTblRowResize && tblTargetRow) {
+                                // 입력창 값 초기화 유도
+                                syncSizeInputs(tbl);
+                            }
+                            if (isPendingTblRowResize && tblTargetRow) {
                                 isTblRowResizing = true;
                                 tblStartH = tblTargetRow.offsetHeight;
-                                document.body.style.cursor = 'ns-resize';
+                                document.body.style.cursor = (isTblColResizing) ? 'nwse-resize' : 'ns-resize';
                             }
                         }
                     }
@@ -2001,21 +2298,36 @@
                         const masterCell = tbl.rows[0].cells[colIdx];
                         if (masterCell) masterCell.style.width = newW + 'px';
                         tbl.style.width = (tblStartTableW + (newW - tblStartW)) + 'px';
+                        syncSizeInputs(tbl);
                     }
-                } else if (isTblRowResizing && tblTargetRow) {
+                }
+                if (isTblRowResizing && tblTargetRow) {
                     const diff = curY - tblStartY;
                     const newH = Math.max(24, tblStartH + diff);
+                    const tbl = tblTargetRow.closest('table');
                     tblTargetRow.style.height = newH + 'px';
                     for (let i = 0; i < tblTargetRow.cells.length; i++) {
                         tblTargetRow.cells[i].style.height = newH + 'px';
                     }
-                } else if (!isTblColResizing && !isTblRowResizing) {
+                    if (tbl) syncSizeInputs(tbl);
+                }
+                if (!isTblColResizing && !isTblRowResizing) {
                     const cell = e.target.closest('#visualTableContainer td, #visualTableContainer th');
                     if (cell) {
                         const rect = cell.getBoundingClientRect();
-                        const isEdgeX = Math.abs(curX - rect.right) < 8 || Math.abs(curX - rect.left) < 8;
-                        const isEdgeY = Math.abs(curY - rect.bottom) < 8;
-                        cell.style.cursor = isEdgeX ? 'ew-resize' : isEdgeY ? 'ns-resize' : '';
+                        const isRight = Math.abs(curX - rect.right) < 10;
+                        const isLeft = Math.abs(curX - rect.left) < 10;
+                        const isBottom = Math.abs(curY - rect.bottom) < 10;
+
+                        if (isBottom && (isRight || isLeft)) {
+                            cell.style.cursor = isRight ? 'nwse-resize' : 'nesw-resize';
+                        } else if (isRight || isLeft) {
+                            cell.style.cursor = 'ew-resize';
+                        } else if (isBottom) {
+                            cell.style.cursor = 'ns-resize';
+                        } else {
+                            cell.style.cursor = '';
+                        }
                     }
                 }
             });
@@ -2037,24 +2349,24 @@
             const t = d.getData('text/plain');
             const h = d.getData('text/html');
 
-            // 1. HTML 내용이 있는 경우 (PPT/엑셀 표의 병합 상태 및 글자 서식 보존을 위해 최우선)
+            // 1. HTML 내용 (Excel, Word 등에서 복사)
             if (h) {
                 e.preventDefault();
                 processHTML(h);
                 return;
             }
 
-            // 2. 엑셀 형태의 탭 구분 텍스트인 경우 (HTML 데이터가 없는 환경에서의 차선책)
+            // 2. 엑셀 형태 탭 구분 텍스트
             if (t && t.indexOf('\t') !== -1) {
                 e.preventDefault();
                 const lines = t.trim().split(/\r\n|\n|\r/), rows = lines.map(line => line.split('\t')), max = Math.max(...rows.map(r => r.length));
                 let tableHtml = `<div class="tbl-scroll">\n<table style="width: auto;" class="xfe_just_info">\n<thead>\n<tr>\n`;
-                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</th>\n`);
-                for (let j = rows[0].length; j < max; j++) tableHtml += `<th style="padding: 2px 8px; line-height: 1.2;">&nbsp;</th>\n`;
+                rows[0].forEach(c => tableHtml += `<th style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${c || '&nbsp;'}</th>\n`);
+                for (let j = rows[0].length; j < max; j++) tableHtml += `<th style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">&nbsp;</th>\n`;
                 tableHtml += '</tr>\n</thead>\n<tbody>\n';
                 for (let i = 1; i < rows.length; i++) {
                     tableHtml += '<tr>\n';
-                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">${c || '&nbsp;'}</td>\n`);
+                    rows[i].forEach(c => tableHtml += `<td style="padding: 2px 4px; line-height: 1.1; text-align: center; vertical-align: middle; font-size: 13px;">${c || '&nbsp;'}</td>\n`);
                     for (let j = rows[i].length; j < max; j++) tableHtml += `<td style="padding: 2px 8px; line-height: 1.2;">&nbsp;</td>\n`;
                     tableHtml += '</tr>\n';
                 }
@@ -2063,7 +2375,7 @@
                 return;
             }
 
-            // 3. 파일 형태의 이미지 확인 (캡처 도구 등 순수 이미지 전용)
+            // 3. 이미지 파일
             for (let item of d.items) {
                 if (item.kind === 'file' && item.type.startsWith('image/')) {
                     const file = item.getAsFile();
@@ -2073,8 +2385,19 @@
                         reader.onload = ev => {
                             const img = new Image();
                             img.onload = () => {
-                                const w = img.width > 800 ? 800 : img.width;
-                                insertHTML(`<div class="img-only"><img src="${ev.target.result}" width="${w}" style="max-width:100%; height:auto;" class="xfe_just_info"></div><p><br></p>`);
+                                // 800px 제한 해제: 원본 크기를 기본으로 하며 툴바에서 자유롭게 조절 가능
+                                const w = img.width;
+                                const insertedHtml = `<span class="img-only"><img src="${ev.target.result}" style="width:${w}px;" class="xfe_just_info"></span>&nbsp;`;
+                                insertHTML(insertedHtml);
+                                // 삽입 직후 해당 이미지를 찾아 툴바 값 자동 입력
+                                setTimeout(() => {
+                                    const recentlyAddedImgs = document.querySelectorAll('.editor-content-view img');
+                                    const latestImg = recentlyAddedImgs[recentlyAddedImgs.length - 1];
+                                    if (latestImg) {
+                                        updateActiveElementForToolbar(latestImg);
+                                        // 시각적으로 선택되었음을 알리기 위해 툴바에 포커스 유도 가능 (선택 사항)
+                                    }
+                                }, 50);
                             };
                             img.src = ev.target.result;
                         };
@@ -2084,7 +2407,7 @@
                 }
             }
 
-            // 4. 일반 평문 텍스트인 경우
+            // 4. 일반 텍스트
             if (t && t.trim().length > 0) {
                 e.preventDefault();
                 insertHTML(t.replace(/\n/g, '<br>'));
@@ -2092,106 +2415,61 @@
             }
 
             function processHTML(htmlText) {
-                // 1. Iframe을 생성하여 원본 스타일(Excel 등)을 완벽 격리된 환경에서 렌더링
                 const iframe = document.createElement('iframe');
-                iframe.style.position = 'absolute';
-                iframe.style.width = '0';
-                iframe.style.height = '0';
-                iframe.style.border = 'none';
-                iframe.style.visibility = 'hidden';
+                iframe.style.position = 'absolute'; iframe.style.width = '0'; iframe.style.height = '0';
+                iframe.style.border = 'none'; iframe.style.visibility = 'hidden';
                 document.body.appendChild(iframe);
-                
                 const doc = iframe.contentWindow.document;
-                doc.open();
-                doc.write(htmlText);
-                doc.close();
-
-                // 2. 계산된 진짜 렌더링 상태(Computed Style)를 각 셀에 기록
-                doc.querySelectorAll('td, th').forEach(el => {
+                doc.open(); doc.write(htmlText); doc.close();
+                doc.querySelectorAll('td, th, col, tr, table').forEach(el => {
                     const comp = iframe.contentWindow.getComputedStyle(el);
-                    
                     const bg = comp.backgroundColor;
-                    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' && bg !== 'rgb(255, 255, 255)') {
-                        el.dataset.bg = bg;
-                    }
-                    
+                    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' && bg !== 'rgb(255, 255, 255)') el.dataset.bg = bg;
                     el.dataset.ta = comp.textAlign;
                     el.dataset.va = comp.verticalAlign;
                     el.dataset.fw = comp.fontWeight;
-                    
                     const c = comp.color;
-                    if (c && !(c.includes('rgb(0, 0, 0)') || c.includes('rgb(34, 34, 34)') || c.includes('rgb(51, 51, 51)') || c.includes('gray'))) {
-                        el.dataset.color = c;
-                    }
-                    
-                    // 테두리 두께가 0초과이며 none이 아닌 경우만 실선으로 보존. 아니면 none 할당
-                    el.dataset.bt = (comp.borderTopStyle !== 'none' && parseFloat(comp.borderTopWidth) > 0) ? `1px solid ${comp.borderTopColor}` : 'none';
-                    el.dataset.bb = (comp.borderBottomStyle !== 'none' && parseFloat(comp.borderBottomWidth) > 0) ? `1px solid ${comp.borderBottomColor}` : 'none';
-                    el.dataset.bl = (comp.borderLeftStyle !== 'none' && parseFloat(comp.borderLeftWidth) > 0) ? `1px solid ${comp.borderLeftColor}` : 'none';
-                    el.dataset.br = (comp.borderRightStyle !== 'none' && parseFloat(comp.borderRightWidth) > 0) ? `1px solid ${comp.borderRightColor}` : 'none';
+                    if (c && !(c.includes('rgb(0, 0, 0)') || c.includes('rgb(34, 34, 34)') || c.includes('gray'))) el.dataset.color = c;
+                    const w = comp.width;
+                    if (w && w !== 'auto' && parseFloat(w) > 0) el.dataset.w = w;
+                    const h = comp.height;
+                    if (h && h !== 'auto' && parseFloat(h) > 0) el.dataset.h = h;
                 });
-
-                // 3. Iframe에서 분석이 끝난 DOM 추출 및 iframe 정리
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = doc.body.innerHTML;
                 document.body.removeChild(iframe);
-
-                // 4. 불필요한 메타, 스타일 태그 제거
                 tempDiv.querySelectorAll('meta, style, script, link').forEach(el => el.remove());
-
-                // 5. 모든 요소 서식 초기화 후 허용된 정보만 인라인 재조립
                 tempDiv.querySelectorAll('*').forEach(el => {
                     const tag = el.tagName.toLowerCase();
-
-                    el.removeAttribute('class');
-                    el.removeAttribute('id');
-                    el.removeAttribute('face');
-                    el.removeAttribute('size');
-                    el.removeAttribute('color');
-                    el.removeAttribute('bgcolor');
-                    el.removeAttribute('background');
-
+                    el.removeAttribute('class'); el.removeAttribute('id');
+                    el.removeAttribute('face'); el.removeAttribute('size');
                     if (el.style) {
                         el.style.cssText = '';
-
                         if (tag === 'img') {
-                            el.style.maxWidth = '100%';
-                            el.style.height = 'auto';
+                            el.style.maxWidth = '100%'; el.style.height = 'auto';
                         } else if (tag === 'table') {
-                            el.style.width = 'auto';
-                            el.style.borderCollapse = 'collapse';
-                            el.style.border = '1px solid #ccc';
-                        } else if (tag === 'td' || tag === 'th') {
-                            el.style.padding = '4px 8px';
-                            el.style.lineHeight = '1.2';
-                            
-                            // 추출한 속성들을 여기서 style로 복원
+                            el.style.width = 'auto'; el.style.borderCollapse = 'collapse';
+                        } else if (tag === 'td' || tag === 'th' || tag === 'col' || tag === 'tr') {
+                            if (tag === 'td' || tag === 'th') {
+                                el.style.padding = '2px 4px'; el.style.lineHeight = '1.1'; el.style.fontSize = '13px';
+                                el.style.border = '1px solid #ccc';
+                                el.style.textAlign = 'center'; // 가운데 정렬 강제
+                                el.style.verticalAlign = 'middle'; // 수직 중앙 강제
+                            }
                             if (el.dataset.bg) el.style.backgroundColor = el.dataset.bg;
-                            if (el.dataset.ta) el.style.textAlign = el.dataset.ta;
-                            if (el.dataset.va) el.style.verticalAlign = el.dataset.va;
+                            // 사용자 요청에 따라 원본(엑셀)의 정렬 데이터(dataset.ta)를 무시하고 무조건 가운데 정렬 유지
+                            // if (el.dataset.ta) el.style.textAlign = el.dataset.ta; 
+                            // if (el.dataset.va) el.style.verticalAlign = el.dataset.va;
                             if (el.dataset.fw && el.dataset.fw !== '400' && el.dataset.fw !== 'normal') el.style.fontWeight = 'bold';
                             if (el.dataset.color) el.style.color = el.dataset.color;
-                            
-                            if (el.dataset.bt) el.style.borderTop = el.dataset.bt;
-                            if (el.dataset.bb) el.style.borderBottom = el.dataset.bb;
-                            if (el.dataset.bl) el.style.borderLeft = el.dataset.bl;
-                            if (el.dataset.br) el.style.borderRight = el.dataset.br;
-                            
-                            ['bg','ta','va','fw','color','bt','bb','bl','br'].forEach(k => el.removeAttribute(`data-${k}`));
-                        } else {
-                            el.style.fontSize = '12px';
-                            el.style.backgroundColor = 'transparent';
-                            el.style.lineHeight = '1.6';
-                            if (tag === 'div' || tag === 'p') {
-                                el.style.marginBottom = '4px';
-                            }
+                            // 너비/높이는 강제 지정하지 않음으로써 최소 사이즈 유지 (content-fit)
+                            // if (el.dataset.w) el.style.width = el.dataset.w;
+                            // if (el.dataset.h) el.style.height = el.dataset.h;
                         }
                     }
                 });
 
-                // 불필요한 빈 span 태그 전처리
-                const spans = tempDiv.querySelectorAll('span');
-                spans.forEach(span => {
+                tempDiv.querySelectorAll('span').forEach(span => {
                     if (span.attributes.length === 0) {
                         const fragment = document.createDocumentFragment();
                         while (span.firstChild) fragment.appendChild(span.firstChild);
@@ -2199,16 +2477,22 @@
                     }
                 });
 
+                // 이미지 가로 배치를 방해하는 불필요한 감싸기 태그(div, p) 제거
+                const allImgs = tempDiv.querySelectorAll('img');
+                if (allImgs.length > 0) {
+                    allImgs.forEach(img => {
+                        img.style.display = 'inline-block';
+                        img.style.verticalAlign = 'top';
+                        // 부모가 div나 p이고 자식이 이미지만 있다면 부모 해제
+                        let parent = img.parentElement;
+                        if (parent && (parent.tagName === 'DIV' || parent.tagName === 'P')) {
+                            if (parent.querySelectorAll('*').length === 1 && parent.textContent.trim() === "") {
+                                parent.style.display = 'inline';
+                            }
+                        }
+                    });
+                }
                 insertHTML(tempDiv.innerHTML);
-            }
-
-
-
-            // 4. 일반 평문 텍스트인 경우
-            if (t && t.trim().length > 0) {
-                e.preventDefault();
-                insertHTML(t.replace(/\n/g, '<br>'));
-                return;
             }
         }
 
