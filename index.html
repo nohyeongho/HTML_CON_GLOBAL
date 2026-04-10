@@ -1701,7 +1701,12 @@
             if (isRestoringSelection) return;
             const sel = window.getSelection();
             if (sel && sel.rangeCount > 0) {
-                selectionRange = sel.getRangeAt(0).cloneRange();
+                const newRange = sel.getRangeAt(0);
+                // 커서 위치가 바뀌면 수동 변경 모드 해제
+                if (selectionRange && (newRange.startContainer !== selectionRange.startContainer || newRange.startOffset !== selectionRange.startOffset)) {
+                    window.isManualFontSizeChange = false;
+                }
+                selectionRange = newRange.cloneRange();
                 syncFontSize();
             }
         }
@@ -1723,6 +1728,12 @@
                 if (node) {
                     const fs = window.getComputedStyle(node).fontSize;
                     const selects = document.querySelectorAll('.font-size-select');
+                    
+                    // 수동 변경 직후라면 자동 동기화를 한 번 건너뜀 (사용자 선택 유지)
+                    if (window.isManualFontSizeChange) {
+                        return;
+                    }
+
                     selects.forEach(select => {
                         const px = parseInt(fs) + 'px';
                         const sizes = ['6px', '8px', '9px', '10px', '11px', '12px', '14px', '16px', '18px', '20px', '22px', '24px', '26px', '28px', '36px', '48px'];
@@ -1754,19 +1765,40 @@
         function changeFontSize(s) {
             restoreSelectionState();
             const val = typeof s === 'string' ? s : s.value;
-            document.execCommand('styleWithCSS', false, true);
-            document.execCommand('fontSize', false, '7');
-            if (lastFocusedEditor) {
-                const markers = lastFocusedEditor.querySelectorAll('font[size="7"], span[style*="font-size: xxx-large"], span[style*="font-size: -webkit-xxx-large"]');
-                markers.forEach(el => {
-                    el.style.fontSize = val;
-                    if (el.tagName === 'FONT') el.removeAttribute('size');
-                    el.querySelectorAll('[style*="font-size"]').forEach(inner => { inner.style.fontSize = 'inherit'; });
-                });
-            }
+            window.isManualFontSizeChange = true;
+            applyStyleToSelection('fontSize', val);
+        }
+
+        function applyStyleToSelection(type, val) {
             const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0) selectionRange = sel.getRangeAt(0).cloneRange();
-            document.querySelectorAll('.font-size-select').forEach(sel => sel.value = val);
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+
+            if (type === 'fontSize') {
+                if (range.collapsed) {
+                    const span = document.createElement('span');
+                    span.style.fontSize = val;
+                    span.appendChild(document.createTextNode('\u200B')); 
+                    range.insertNode(span);
+                    range.setStart(span.firstChild, 1); // ZWSP 뒤로
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                } else {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('fontSize', false, '7');
+                    if (lastFocusedEditor) {
+                        const markers = lastFocusedEditor.querySelectorAll('font[size="7"], span[style*="font-size: xxx-large"], span[style*="font-size: -webkit-xxx-large"]');
+                        markers.forEach(el => {
+                            el.style.fontSize = val;
+                            if (el.tagName === 'FONT') el.removeAttribute('size');
+                            el.querySelectorAll('[style*="font-size"]').forEach(inner => { inner.style.fontSize = 'inherit'; });
+                        });
+                    }
+                }
+                document.querySelectorAll('.font-size-select').forEach(sel => sel.value = val);
+            }
+            saveSelectionState();
         }
 
         function stepFontSize(d) {
@@ -1853,7 +1885,11 @@
             el.addEventListener('paste', handleContentPaste);
             el.addEventListener('focus', () => { lastFocusedEditor = el; saveSelectionState(); });
             el.addEventListener('mouseup', saveSelectionState);
-            el.addEventListener('keyup', saveSelectionState);
+            el.addEventListener('keyup', () => {
+                // 글자를 입력하기 시작하면 수동 변경 모드 해제 (스타일이 입혀졌으므로)
+                window.isManualFontSizeChange = false;
+                saveSelectionState();
+            });
         });
 
         // Inject toolbar HTML into all editor-toolbar divs and init color picker
@@ -2136,6 +2172,12 @@
             edIsColResizing = edIsRowResizing = edIsImgResizing = false;
             edIsPendingColResize = edIsPendingRowResize = edIsPendingImgResize = false;
             document.body.style.cursor = ''; document.body.style.userSelect = '';
+
+            // 수동 크기 변경 후 클릭했을 때, 해당 위치에 선택한 크기 강제 재적용
+            if (window.isManualFontSizeChange) {
+                const select = document.querySelector('.font-size-select');
+                if (select) applyStyleToSelection('fontSize', select.value);
+            }
         });
 
         // --- Table Modal Logic ---
