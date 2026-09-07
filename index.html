@@ -4315,6 +4315,13 @@ ${contentBody}
         }
 
 
+        /**
+         * 뷰어로 확인하기 핸들러
+         * [의도]
+         * 기존의 읽기 전용 뷰어(Blob URL) 대신, 새 창에서 콘텐츠를 직접 클릭하여 수정(contenteditable)하고
+         * 상단의 '저장' 버튼을 통해 부모 창의 HTML 소스 및 입력 폼에 즉시 양방향 동기화할 수 있는
+         * 편집형 뷰어 창을 생성하여 표시합니다.
+         */
         function viewManualHTML() {
             const htmlCode = document.getElementById('manualHtmlInput').value;
             if (!htmlCode.trim()) {
@@ -4322,20 +4329,467 @@ ${contentBody}
                 return;
             }
 
-            const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
+            // HTML 문서 구조 파악 및 파싱
+            let fullHtml = htmlCode;
+            if (!/<html[\s>]/i.test(fullHtml)) {
+                fullHtml = `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"/><title>HTML 뷰어</title></head><body>${fullHtml}</body></html>`;
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(fullHtml, 'text/html');
+
+            // 1. 뷰어 전용 스타일 추가 (상단 툴바 및 편집 가이드라인)
+            let styleTag = doc.getElementById('viewer-editor-style');
+            if (!styleTag) {
+                styleTag = doc.createElement('style');
+                styleTag.id = 'viewer-editor-style';
+                styleTag.textContent = `
+                    /* 뷰어 편집 모드 스타일 */
+                    body {
+                        margin: 0;
+                        padding-top: 54px !important;
+                        position: relative;
+                    }
+                    #viewer-editor-toolbar {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 52px;
+                        background: #1e1e1e;
+                        color: #ffffff;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 20px;
+                        box-sizing: border-box;
+                        z-index: 999999;
+                        border-bottom: 2px solid #2196F3;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif;
+                        user-select: none;
+                    }
+                    #viewer-editor-toolbar .title-area {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    #viewer-editor-toolbar .title {
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: #2196F3;
+                    }
+                    #viewer-editor-toolbar .guide {
+                        font-size: 12px;
+                        color: #aaa;
+                    }
+                    #viewer-editor-toolbar .btn-group {
+                        display: flex;
+                        gap: 8px;
+                    }
+                    #viewer-editor-toolbar button {
+                        padding: 6px 14px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        border-radius: 4px;
+                        border: none;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                    }
+                    #viewer-editor-toolbar button:hover {
+                        opacity: 0.85;
+                    }
+                    #viewer-editor-toolbar .btn-save {
+                        background: #2196F3;
+                        color: #fff;
+                    }
+                    #viewer-editor-toolbar .btn-close {
+                        background: #555;
+                        color: #fff;
+                    }
+                    /* 본문 요소 편집 포커스 시 부드러운 아웃라인 */
+                    [contenteditable="true"] *:focus,
+                    body:focus {
+                        outline: 1px dashed #2196F3 !important;
+                        outline-offset: 2px;
+                    }
+                    /* 링크 요소 편집 편의를 위한 커서 */
+                    a {
+                        cursor: text !important;
+                    }
+                    /* 이미지 선택 시 커서 및 리사이즈 오버레이 스타일 */
+                    img {
+                        cursor: pointer;
+                    }
+                    #viewer-image-resizer {
+                        position: absolute;
+                        display: none;
+                        border: 2px solid #2196F3;
+                        z-index: 99999;
+                        pointer-events: none;
+                        box-sizing: border-box;
+                    }
+                    .vr-handle {
+                        pointer-events: auto;
+                        position: absolute;
+                        width: 10px;
+                        height: 10px;
+                        background: #ffffff;
+                        border: 2px solid #2196F3;
+                        border-radius: 2px;
+                        box-sizing: border-box;
+                    }
+                    .vr-h-t { top: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+                    .vr-h-b { bottom: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+                    .vr-h-l { left: -5px; top: calc(50% - 5px); cursor: ew-resize; }
+                    .vr-h-r { right: -5px; top: calc(50% - 5px); cursor: ew-resize; }
+                    .vr-h-tl { top: -5px; left: -5px; cursor: nwse-resize; }
+                    .vr-h-tr { top: -5px; right: -5px; cursor: nesw-resize; }
+                    .vr-h-bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
+                    .vr-h-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
+                    #vr-size-badge {
+                        position: absolute;
+                        bottom: -26px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #1e1e1e;
+                        color: #ffffff;
+                        padding: 2px 8px;
+                        font-size: 11px;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        border-radius: 3px;
+                        white-space: nowrap;
+                        pointer-events: none;
+                        border: 1px solid #555;
+                    }
+                `;
+                doc.head.appendChild(styleTag);
+            }
+
+            // 2. 뷰어 상단 툴바 DOM 구성
+            let toolbar = doc.getElementById('viewer-editor-toolbar');
+            if (!toolbar) {
+                toolbar = doc.createElement('div');
+                toolbar.id = 'viewer-editor-toolbar';
+                toolbar.setAttribute('contenteditable', 'false');
+                toolbar.innerHTML = `
+                    <div class="title-area">
+                        <span class="title">🌐 HTML 뷰어 (직접 편집 모드)</span>
+                        <span class="guide">텍스트 수정 및 이미지를 클릭하여 상하/좌우 크기를 조절할 수 있습니다.</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-save" onclick="saveAndSyncToParent()">💾 저장 및 소스 동기화</button>
+                        <button class="btn-close" onclick="window.close()">닫기</button>
+                    </div>
+                `;
+                if (doc.body.firstChild) {
+                    doc.body.insertBefore(toolbar, doc.body.firstChild);
+                } else {
+                    doc.body.appendChild(toolbar);
+                }
+            }
+
+            // 3. 뷰어 화면 편집 활성화 (body 전체를 contenteditable로 지정하여 모든 텍스트/표/목록 편집 지원)
+            doc.body.setAttribute('contenteditable', 'true');
+
+            // 4. 이미지 리사이즈 오버레이 DOM 추가
+            let resizerBox = doc.getElementById('viewer-image-resizer');
+            if (!resizerBox) {
+                resizerBox = doc.createElement('div');
+                resizerBox.id = 'viewer-image-resizer';
+                resizerBox.setAttribute('contenteditable', 'false');
+                resizerBox.innerHTML = `
+                    <div class="vr-handle vr-h-t" data-dir="t" title="상하(높이) 조절"></div>
+                    <div class="vr-handle vr-h-b" data-dir="b" title="상하(높이) 조절"></div>
+                    <div class="vr-handle vr-h-l" data-dir="l" title="좌우(너비) 조절"></div>
+                    <div class="vr-handle vr-h-r" data-dir="r" title="좌우(너비) 조절"></div>
+                    <div class="vr-handle vr-h-tl" data-dir="tl" title="대각선 크기 조절"></div>
+                    <div class="vr-handle vr-h-tr" data-dir="tr" title="대각선 크기 조절"></div>
+                    <div class="vr-handle vr-h-bl" data-dir="bl" title="대각선 크기 조절"></div>
+                    <div class="vr-handle vr-h-br" data-dir="br" title="대각선 크기 조절"></div>
+                    <div id="vr-size-badge">0 × 0 px</div>
+                `;
+                doc.body.appendChild(resizerBox);
+            }
+
+            // 5. 뷰어 내 동기화 및 이미지 리사이즈 스크립트 추가
+            let scriptTag = doc.getElementById('viewer-editor-script');
+            if (!scriptTag) {
+                scriptTag = doc.createElement('script');
+                scriptTag.id = 'viewer-editor-script';
+                scriptTag.textContent = `
+                    /**
+                     * [이미지 리사이즈 컨트롤러]
+                     * 뷰어 내의 이미지를 클릭했을 때 상하, 좌우, 모서리 리사이즈 핸들을 노출하고
+                     * 드래그를 통해 이미지 크기를 실시간으로 조절합니다.
+                     */
+                    let activeImg = null;
+                    let isResizing = false;
+                    let currentHandle = null;
+                    let startX = 0, startY = 0;
+                    let startW = 0, startH = 0;
+
+                    const resizer = document.getElementById('viewer-image-resizer');
+                    const sizeBadge = document.getElementById('vr-size-badge');
+
+                    function updateResizerPosition() {
+                        if (!activeImg || !resizer) return;
+                        const rect = activeImg.getBoundingClientRect();
+                        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+                        resizer.style.left = (rect.left + scrollX) + 'px';
+                        resizer.style.top = (rect.top + scrollY) + 'px';
+                        resizer.style.width = rect.width + 'px';
+                        resizer.style.height = rect.height + 'px';
+                        if (sizeBadge) {
+                            sizeBadge.textContent = Math.round(rect.width) + ' × ' + Math.round(rect.height) + ' px';
+                        }
+                    }
+
+                    // 이미지 클릭 시 리사이즈 박스 활성화
+                    document.addEventListener('click', function(e) {
+                        const img = e.target.closest('img');
+                        if (img && !e.target.closest('#viewer-editor-toolbar')) {
+                            activeImg = img;
+                            resizer.style.display = 'block';
+                            updateResizerPosition();
+                            return;
+                        }
+
+                        // 핸들이나 이미지가 아닌 다른 영역 클릭 시 리사이즈 박스 숨김
+                        if (!e.target.closest('#viewer-image-resizer')) {
+                            if (resizer) resizer.style.display = 'none';
+                            activeImg = null;
+                        }
+                    });
+
+                    // 뷰어 스크롤 및 윈도우 리사이즈 시 리사이저 위치 동기화
+                    window.addEventListener('scroll', updateResizerPosition, true);
+                    window.addEventListener('resize', updateResizerPosition);
+
+                    // 리사이즈 핸들 드래그 시작 (mousedown)
+                    document.addEventListener('mousedown', function(e) {
+                        const handle = e.target.closest('.vr-handle');
+                        if (handle && activeImg) {
+                            isResizing = true;
+                            currentHandle = handle.dataset.dir;
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            startW = activeImg.offsetWidth;
+                            startH = activeImg.offsetHeight;
+                            document.body.style.userSelect = 'none';
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    });
+
+                    // 리사이즈 드래그 진행 (mousemove)
+                    window.addEventListener('mousemove', function(e) {
+                        if (!isResizing || !activeImg) return;
+
+                        const diffX = e.clientX - startX;
+                        const diffY = e.clientY - startY;
+
+                        let newW = startW;
+                        let newH = startH;
+
+                        // 좌우(너비) 조절: r, tr, br(우측) / l, tl, bl(좌측)
+                        if (['r', 'tr', 'br'].includes(currentHandle)) {
+                            newW = Math.max(20, startW + diffX);
+                            activeImg.style.setProperty('width', Math.round(newW) + 'px', 'important');
+                            activeImg.style.setProperty('max-width', 'none', 'important');
+                            activeImg.setAttribute('width', Math.round(newW));
+                        } else if (['l', 'tl', 'bl'].includes(currentHandle)) {
+                            newW = Math.max(20, startW - diffX);
+                            activeImg.style.setProperty('width', Math.round(newW) + 'px', 'important');
+                            activeImg.style.setProperty('max-width', 'none', 'important');
+                            activeImg.setAttribute('width', Math.round(newW));
+                        }
+
+                        // 상하(높이) 조절: b, bl, br(하단) / t, tl, tr(상단)
+                        if (['b', 'bl', 'br'].includes(currentHandle)) {
+                            newH = Math.max(20, startH + diffY);
+                            activeImg.style.setProperty('height', Math.round(newH) + 'px', 'important');
+                            activeImg.setAttribute('height', Math.round(newH));
+                        } else if (['t', 'tl', 'tr'].includes(currentHandle)) {
+                            newH = Math.max(20, startH - diffY);
+                            activeImg.style.setProperty('height', Math.round(newH) + 'px', 'important');
+                            activeImg.setAttribute('height', Math.round(newH));
+                        }
+
+                        updateResizerPosition();
+                    });
+
+                    // 리사이즈 종료 (mouseup)
+                    window.addEventListener('mouseup', function() {
+                        if (isResizing) {
+                            isResizing = false;
+                            currentHandle = null;
+                            document.body.style.userSelect = '';
+                        }
+                    });
+
+                    /**
+                     * 뷰어에서 수정한 내용(텍스트 및 변경된 이미지 크기)을 부모 창으로 전달하고 HTML 소스와 동기화하는 함수
+                     */
+                    function saveAndSyncToParent() {
+                        // 현재 DOM 복제 후 편집 전용 툴바, 리사이저, 스타일, 스크립트 제거하여 순수 HTML 추출
+                        const cloneDoc = document.documentElement.cloneNode(true);
+                        
+                        const tb = cloneDoc.querySelector('#viewer-editor-toolbar');
+                        if (tb) tb.remove();
+                        const rz = cloneDoc.querySelector('#viewer-image-resizer');
+                        if (rz) rz.remove();
+                        const st = cloneDoc.querySelector('#viewer-editor-style');
+                        if (st) st.remove();
+                        const sc = cloneDoc.querySelector('#viewer-editor-script');
+                        if (sc) sc.remove();
+                        const toast = cloneDoc.querySelector('#viewer-toast-msg');
+                        if (toast) toast.remove();
+
+                        cloneDoc.removeAttribute('contenteditable');
+                        cloneDoc.querySelectorAll('[contenteditable]').forEach(function(el) {
+                            el.removeAttribute('contenteditable');
+                        });
+
+                        const langAttr = document.documentElement.lang ? ' lang="' + document.documentElement.lang + '"' : '';
+                        const cleanHtml = '<!DOCTYPE html>\\n<html' + langAttr + '>\\n' + cloneDoc.innerHTML + '\\n</html>';
+
+                        let synced = false;
+                        try {
+                            if (window.opener && !window.opener.closed && typeof window.opener.syncViewerChanges === 'function') {
+                                window.opener.syncViewerChanges(cleanHtml);
+                                synced = true;
+                            }
+                        } catch (err) {
+                            console.warn('부모 창 직접 호출 동기화 실패, postMessage 시도:', err);
+                        }
+
+                        try {
+                            if (window.opener && !window.opener.closed) {
+                                window.opener.postMessage({ type: 'SYNC_HTML_FROM_VIEWER', html: cleanHtml }, '*');
+                                synced = true;
+                            }
+                        } catch (err) {
+                            console.warn('부모 창 postMessage 전송 실패:', err);
+                        }
+
+                        showViewerToast(synced ? '✓ 수정 사항(이미지 크기 포함)이 저장되고 HTML 소스에 동기화되었습니다.' : '✓ 저장은 완료되었으나 부모 창을 찾을 수 없습니다.');
+                    }
+
+                    function showViewerToast(msg) {
+                        let toast = document.getElementById('viewer-toast-msg');
+                        if (!toast) {
+                            toast = document.createElement('div');
+                            toast.id = 'viewer-toast-msg';
+                            toast.setAttribute('contenteditable', 'false');
+                            toast.style.cssText = 'position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(33, 150, 243, 0.95); color: #fff; padding: 10px 22px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 1000000; box-shadow: 0 4px 12px rgba(0,0,0,0.25); transition: opacity 0.3s; font-family: sans-serif;';
+                            document.body.appendChild(toast);
+                        }
+                        toast.textContent = msg;
+                        toast.style.opacity = '1';
+                        toast.style.display = 'block';
+                        setTimeout(function() {
+                            toast.style.opacity = '0';
+                            setTimeout(function() { toast.style.display = 'none'; }, 300);
+                        }, 2200);
+                    }
+
+                    document.addEventListener('click', function(e) {
+                        var link = e.target.closest('a');
+                        if (link && !e.target.closest('#viewer-editor-toolbar')) {
+                            e.preventDefault();
+                        }
+                    }, false);
+                `;
+                doc.body.appendChild(scriptTag);
+            }
+
+            const finalViewerHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+
+            const viewerWin = window.open('', '_blank');
+            if (viewerWin) {
+                viewerWin.document.open();
+                viewerWin.document.write(finalViewerHtml);
+                viewerWin.document.close();
+            } else {
+                alert('팝업 창이 차단되었습니다. 팝업 허용 후 다시 시도해 주세요.');
+            }
         }
 
+        /**
+         * 뷰어 화면에서 저장 시 부모 창의 HTML 소스 및 입력 폼과 양방향 동기화하는 함수
+         * [의도]
+         * 뷰어에서 사용자가 수정한 HTML 콘텐츠를 부모 창의 HTML 입력 텍스트영역(manualHtmlInput),
+         * 변환 코드 출력(codeOutput), 미리보기(previewContainer), 그리고 입력 폼 필드들에
+         * 정확하게 반영하여 사용자가 어느 화면에서 보더라도 최신 수정 내용이 유지되도록 합니다.
+         */
+        function syncViewerChanges(updatedHtml) {
+            if (!updatedHtml || !updatedHtml.trim()) return;
 
-        function loadFromHTML() {
+            // 1. HTML 직접 입력 뷰어 모달의 textarea에 반영
+            const manualInput = document.getElementById('manualHtmlInput');
+            if (manualInput) {
+                manualInput.value = updatedHtml;
+            }
+
+            // 2. 메인 화면의 변환 코드 출력 textarea에 반영
+            const codeOutput = document.getElementById('codeOutput');
+            if (codeOutput) {
+                codeOutput.value = updatedHtml;
+            }
+
+            // 3. 메인 화면의 기기 미리보기(previewContainer)에 반영
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(updatedHtml, 'text/html');
+                const postDataEl = doc.querySelector('.postData');
+                const contentViewEl = doc.querySelector('.content-service-view');
+                const previewContainer = document.getElementById('previewContainer');
+                if (previewContainer && contentViewEl) {
+                    const postDataHtml = postDataEl ? postDataEl.outerHTML : '';
+                    previewContainer.innerHTML = `${postDataHtml}\n<div class="content-service-view" style="padding: 10px">${contentViewEl.innerHTML}</div>`;
+                }
+            } catch (e) {
+                console.warn('미리보기 컨테이너 동기화 중 오류:', e);
+            }
+
+            // 4. 에디터 폼 필드(제목, 본문 등)도 최신 내용으로 동기화 (사용자 확인 팝업 없이 처리)
+            try {
+                if (typeof loadFromHTML === 'function') {
+                    loadFromHTML(true); // silent = true: 확인 팝업 없이 조용히 동기화
+                    // loadFromHTML 내부 실행 후 최종 HTML 원본이 유지되도록 codeOutput 재확정
+                    if (codeOutput) {
+                        codeOutput.value = updatedHtml;
+                    }
+                    if (manualInput) {
+                        manualInput.value = updatedHtml;
+                    }
+                }
+            } catch (e) {
+                console.error('폼 필드 동기화 오류:', e);
+            }
+        }
+
+        // 뷰어 창에서 postMessage로 전달되는 동기화 메시지 수신 등록
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'SYNC_HTML_FROM_VIEWER') {
+                syncViewerChanges(event.data.html);
+            }
+        });
+
+        /**
+         * HTML 코드를 파싱하여 에디터 폼 요소들로 복원하는 함수
+         * @param {boolean} silent - true인 경우 확인창 및 완료 알림 없이 조용히 동기화 수행 (뷰어 저장 연동 시 사용)
+         */
+        function loadFromHTML(silent = false) {
             const htmlCode = document.getElementById('manualHtmlInput').value;
             if (!htmlCode.trim()) {
-                alert('입력된 코드가 없습니다.');
+                if (!silent) alert('입력된 코드가 없습니다.');
                 return;
             }
 
-            if (!confirm('현재 입력된 내용이 소스 코드의 내용으로 대체됩니다. 진행하시겠습니까?')) {
+            if (!silent && !confirm('현재 입력된 내용이 소스 코드의 내용으로 대체됩니다. 진행하시겠습니까?')) {
                 return;
             }
 
@@ -4445,14 +4899,16 @@ ${contentBody}
                     }
                 });
 
-                alert('데이터가 에디터로 복원되었습니다.');
-                closeHTMLViewerModal();
-                switchTab('edit');
-                if (typeof generateHTML === 'function') generateHTML();
+                if (!silent) {
+                    alert('데이터가 에디터로 복원되었습니다.');
+                    closeHTMLViewerModal();
+                    switchTab('edit');
+                    if (typeof generateHTML === 'function') generateHTML();
+                }
 
             } catch (err) {
                 console.error('HTML Parsing error:', err);
-                alert('HTML 소스를 분석하는 중 오류가 발생했습니다. 올바른 형식인지 확인해 주세요.');
+                if (!silent) alert('HTML 소스를 분석하는 중 오류가 발생했습니다. 올바른 형식인지 확인해 주세요.');
             }
         }
 
