@@ -606,6 +606,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            font-size: 15px;
             color: #555;
         }
 
@@ -616,7 +617,7 @@
             border-radius: var(--radius-md);
             box-sizing: border-box;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 15px;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -649,7 +650,7 @@
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             color: #555;
             transition: all 0.2s;
             height: 30px;
@@ -668,7 +669,7 @@
 
         .editor-toolbar select {
             padding: 0 8px;
-            font-size: 12px;
+            font-size: 13px;
             border: 1px solid #ddd;
             border-radius: 4px;
             height: 30px;
@@ -690,7 +691,7 @@
         }
 
         .btn-font-step span {
-            font-size: 10px;
+            font-size: 11px;
             margin-left: 2px;
             color: #0078d4;
         }
@@ -996,7 +997,7 @@
             box-sizing: border-box;
             background: #fff;
             outline: none;
-            font-size: 14px;
+            font-size: 15px;
             line-height: 1.5;
         }
 
@@ -1026,7 +1027,7 @@
             min-width: 0;
             text-align: center;
             vertical-align: middle;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.1;
             word-break: break-all;
             overflow-wrap: break-word;
@@ -2031,7 +2032,7 @@
             </select>
             <select onchange="changeFontSize(this)" class="font-size-select" id="fontSizeSelect" onmousedown="event.stopPropagation()">
                 <option value="6px">6</option><option value="8px">8</option><option value="9px">9</option>
-                <option value="10px">10</option><option value="11px" selected="">11</option><option value="12px">12</option>
+                <option value="10px">10</option><option value="11px">11</option><option value="12px" selected="">12</option>
                 <option value="14px">14</option><option value="16px">16</option><option value="18px">18</option>
                 <option value="20px">20</option><option value="22px">22</option><option value="24px">24</option>
                 <option value="26px">26</option><option value="28px">28</option><option value="36px">36</option>
@@ -2088,7 +2089,7 @@
             </select>
             <select onchange="changeFontSize(this)" class="font-size-select" id="fontSizeSelect" onmousedown="event.stopPropagation()">
                 <option value="6px">6</option><option value="8px">8</option><option value="9px">9</option>
-                <option value="10px">10</option><option value="11px" selected="">11</option><option value="12px">12</option>
+                <option value="10px">10</option><option value="11px">11</option><option value="12px" selected="">12</option>
                 <option value="14px">14</option><option value="16px">16</option><option value="18px">18</option>
                 <option value="20px">20</option><option value="22px">22</option><option value="24px">24</option>
                 <option value="26px">26</option><option value="28px">28</option><option value="36px">36</option>
@@ -2141,7 +2142,7 @@
             </select>
             <select onchange="changeFontSize(this)" class="font-size-select" id="fontSizeSelect" onmousedown="event.stopPropagation()">
                 <option value="6px">6</option><option value="8px">8</option><option value="9px">9</option>
-                <option value="10px">10</option><option value="11px" selected="">11</option><option value="12px">12</option>
+                <option value="10px">10</option><option value="11px">11</option><option value="12px" selected="">12</option>
                 <option value="14px">14</option><option value="16px">16</option><option value="18px">18</option>
                 <option value="20px">20</option><option value="22px">22</option><option value="24px">24</option>
                 <option value="26px">26</option><option value="28px">28</option><option value="36px">36</option>
@@ -2194,7 +2195,7 @@
             </select>
             <select onchange="changeFontSize(this)" class="font-size-select" id="fontSizeSelect" onmousedown="event.stopPropagation()">
                 <option value="6px">6</option><option value="8px">8</option><option value="9px">9</option>
-                <option value="10px">10</option><option value="11px" selected="">11</option><option value="12px">12</option>
+                <option value="10px">10</option><option value="11px">11</option><option value="12px" selected="">12</option>
                 <option value="14px">14</option><option value="16px">16</option><option value="18px">18</option>
                 <option value="20px">20</option><option value="22px">22</option><option value="24px">24</option>
                 <option value="26px">26</option><option value="28px">28</option><option value="36px">36</option>
@@ -4517,9 +4518,17 @@ ${contentBody}
                 toolbar.innerHTML = `
                     <div class="title-area">
                         <span class="title">🌐 HTML 뷰어 (직접 편집 모드)</span>
-                        <span class="guide">텍스트 수정 및 이미지를 클릭하여 상하/좌우 크기를 조절할 수 있습니다.</span>
+                        <span class="guide">텍스트 수정, 글자 크기 조절 및 이미지를 클릭하여 상하/좌우 크기를 조절할 수 있습니다.</span>
                     </div>
-                    <div class="btn-group">
+                    <div class="btn-group" style="display: flex; align-items: center; gap: 8px;">
+                        <select id="viewerFontSizeSelect" onchange="applyViewerFontSize(this.value)" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #555; background: #2a2a2a; color: #fff; cursor: pointer;">
+                            <option value="" disabled selected>글자 크기</option>
+                            <option value="8px">8</option><option value="9px">9</option><option value="10px">10</option>
+                            <option value="11px">11</option><option value="12px">12</option><option value="14px">14</option>
+                            <option value="16px">16</option><option value="18px">18</option><option value="20px">20</option>
+                            <option value="22px">22</option><option value="24px">24</option><option value="28px">28</option>
+                            <option value="36px">36</option><option value="48px">48</option>
+                        </select>
                         <button class="btn-save" onclick="saveAndSyncToParent()">💾 저장 및 소스 동기화</button>
                         <button class="btn-close" onclick="window.close()">닫기</button>
                     </div>
@@ -4744,6 +4753,51 @@ ${contentBody}
                             e.preventDefault();
                         }
                     }, false);
+
+                    /**
+                     * 뷰어 화면 내 선택된 텍스트의 폰트 크기 변경 함수
+                     */
+                    function applyViewerFontSize(val) {
+                        if (!val) return;
+                        const sel = window.getSelection();
+                        if (!sel || sel.rangeCount === 0 || sel.getRangeAt(0).collapsed) {
+                            alert('크기를 변경할 텍스트를 먼저 마우스로 드래그하여 선택해 주세요.');
+                            const selectEl = document.getElementById('viewerFontSizeSelect');
+                            if (selectEl) selectEl.value = '';
+                            return;
+                        }
+                        const range = sel.getRangeAt(0);
+                        let container = range.commonAncestorContainer;
+                        if (container.nodeType === 3) container = container.parentElement;
+
+                        if (container && container.tagName === 'SPAN' && container.textContent === range.toString()) {
+                            container.style.setProperty('font-size', val, 'important');
+                            container.querySelectorAll('*').forEach(function(el) {
+                                el.style.removeProperty('font-size');
+                            });
+                            range.selectNodeContents(container);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        } else {
+                            const fragment = range.extractContents();
+                            if (fragment.querySelectorAll) {
+                                fragment.querySelectorAll('*').forEach(function(el) {
+                                    el.style.removeProperty('font-size');
+                                    if (el.tagName === 'FONT') el.removeAttribute('size');
+                                });
+                            }
+                            const newSpan = document.createElement('span');
+                            newSpan.style.setProperty('font-size', val, 'important');
+                            newSpan.appendChild(fragment);
+
+                            range.insertNode(newSpan);
+
+                            const newRange = document.createRange();
+                            newRange.selectNodeContents(newSpan);
+                            sel.removeAllRanges();
+                            sel.addRange(newRange);
+                        }
+                    }
                 `;
                 doc.body.appendChild(scriptTag);
             }
