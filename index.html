@@ -4601,6 +4601,15 @@ ${contentBody}
                 doc.head.appendChild(styleTag);
             }
 
+            // FontAwesome 아이콘 스타일 링크 삽입 (뷰어 툴바 내 정렬 아이콘 렌더링용)
+            if (!doc.querySelector('link[href*="font-awesome"]')) {
+                const faLink = doc.createElement('link');
+                faLink.id = 'viewer-fa-link';
+                faLink.rel = 'stylesheet';
+                faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+                doc.head.appendChild(faLink);
+            }
+
             // 2. 뷰어 상단 툴바 DOM 구성
             let toolbar = doc.getElementById('viewer-editor-toolbar');
             if (!toolbar) {
@@ -4621,6 +4630,10 @@ ${contentBody}
                             <option value="22px">22</option><option value="24px">24</option><option value="28px">28</option>
                             <option value="36px">36</option><option value="48px">48</option>
                         </select>
+                        <button class="btn-align" onclick="applyViewerAlignment('left')" onmousedown="event.preventDefault()" title="왼쪽 정렬"><i class="fas fa-align-left"></i></button>
+                        <button class="btn-align" onclick="applyViewerAlignment('center')" onmousedown="event.preventDefault()" title="가운데 정렬"><i class="fas fa-align-center"></i></button>
+                        <button class="btn-align" onclick="applyViewerAlignment('right')" onmousedown="event.preventDefault()" title="오른쪽 정렬"><i class="fas fa-align-right"></i></button>
+                        <button class="btn-align" onclick="applyViewerAlignment('justify')" onmousedown="event.preventDefault()" title="양쪽 정렬"><i class="fas fa-align-justify"></i></button>
                         <button class="btn-save" onclick="saveAndSyncToParent()">💾 저장 및 소스 동기화</button>
                         <button class="btn-close" onclick="window.close()">닫기</button>
                     </div>
@@ -4786,6 +4799,8 @@ ${contentBody}
                         if (rz) rz.remove();
                         const st = cloneDoc.querySelector('#viewer-editor-style');
                         if (st) st.remove();
+                        const fa = cloneDoc.querySelector('#viewer-fa-link');
+                        if (fa) fa.remove();
                         const sc = cloneDoc.querySelector('#viewer-editor-script');
                         if (sc) sc.remove();
                         const toast = cloneDoc.querySelector('#viewer-toast-msg');
@@ -4888,6 +4903,60 @@ ${contentBody}
                             newRange.selectNodeContents(newSpan);
                             sel.removeAllRanges();
                             sel.addRange(newRange);
+                        }
+                    }
+
+                    /**
+                     * 뷰어 화면 내 선택 영역 또는 블록에 텍스트 정렬 적용 함수
+                     * [의도]
+                     * 뷰어 직접 편집 모드에서도 사용자가 텍스트, 제목(h1~h6), 표 셀(th, td), 목록(li) 등을
+                     * 선택하여 왼쪽/가운데/오른쪽/양쪽 정렬을 클릭했을 때 실시간으로 정렬이 적용되고,
+                     * 인라인 style.textAlign을 명시적으로 부여하여 '저장 및 동기화' 시에도 유지되도록 합니다.
+                     */
+                    function applyViewerAlignment(align) {
+                        const sel = window.getSelection();
+                        if (!sel || sel.rangeCount === 0) {
+                            alert('정렬할 텍스트를 먼저 마우스로 드래그하거나 커서를 위치시켜 주세요.');
+                            return;
+                        }
+
+                        // 1. 브라우저 execCommand 정렬 실행
+                        const cmdMap = {
+                            'left': 'justifyLeft',
+                            'center': 'justifyCenter',
+                            'right': 'justifyRight',
+                            'justify': 'justifyFull'
+                        };
+                        const cmd = cmdMap[align] || 'justifyLeft';
+                        document.execCommand('styleWithCSS', false, true);
+                        document.execCommand(cmd, false, null);
+
+                        // 2. 표 셀(th, td), 제목(h1~h6), 목록(li) 등 블록 요소에 직접 인라인 스타일 보정
+                        const range = sel.getRangeAt(0);
+                        let node = range.commonAncestorContainer;
+                        if (node.nodeType === 3) node = node.parentElement;
+
+                        if (node) {
+                            // 표 셀인 경우 th/td 자체에 textAlign 지정
+                            const cell = node.closest('td, th');
+                            if (cell) {
+                                cell.style.textAlign = align;
+                            }
+                            // 제목 요소인 경우
+                            const heading = node.closest('h1, h2, h3, h4, h5, h6');
+                            if (heading) {
+                                heading.style.textAlign = align;
+                            }
+                            // 목록 아이템인 경우
+                            const listItem = node.closest('li');
+                            if (listItem) {
+                                listItem.style.textAlign = align;
+                            }
+                            // 일반 단락 또는 블록인 경우 (툴바 제외)
+                            const block = node.closest('p, div');
+                            if (block && !block.closest('#viewer-editor-toolbar') && !block.closest('#viewer-image-resizer')) {
+                                block.style.textAlign = align;
+                            }
                         }
                     }
                 `;
@@ -5751,6 +5820,17 @@ ${contentBody}
             });
         }
 
+        /**
+         * 제품군 선택 완료 처리 핸들러
+         * [의도]
+         * 1) 시스템 내부 검색 및 데이터 처리(postData의 data-productlv2, data-productlv3)에는
+         *    선택된 전체 제품군 코드를 100% 온전히 유지합니다.
+         * 2) 사용자 UI(편집기 표시창 inProductFamily)에는 사용자가 정의한 4가지 동작 기준에 따라 표시합니다:
+         *    - Case 1: 대분류 전체 선택 + 소분류 전체 선택 -> '전제품'
+         *    - Case 2: 대분류 일부 선택 (+ 소분류 일부 선택) -> 실제 선택 제품군(소분류) 표시
+         *    - Case 3: 대분류 전체 선택 + 소분류 일부 선택 -> 실제 선택 소분류 표시
+         *    - Case 4: 대분류 일부 선택 + 소분류 전체 선택 -> 실제 선택 대분류 표시
+         */
         function confirmProductSelection() {
             const postDataDiv = document.querySelector('.postData');
 
@@ -5758,7 +5838,7 @@ ${contentBody}
             if (allCheck && allCheck.checked) {
                 postDataDiv.setAttribute('data-productlv2', "['ALL']");
                 postDataDiv.setAttribute('data-productlv3', "['ALL']");
-                document.getElementById('inProductFamily').value = 'ALL';
+                document.getElementById('inProductFamily').value = '전제품';
                 closeProductModal();
                 toggleClearBtn('inProductFamily', 'clearProduct');
                 generateHTML();
@@ -5768,41 +5848,70 @@ ${contentBody}
             const lv2Array = Array.from(selectedLv2Codes);
             const lv3Array = Array.from(selectedLv3Codes);
 
+            // 시스템 내부 메타데이터 및 검색용 속성에는 선택된 전체 코드를 그대로 보존
             const lv2Str = lv2Array.length > 0 ? "['" + lv2Array.join("', '") + "']" : "['ALL']";
             const lv3Str = lv3Array.length > 0 ? "['" + lv3Array.join("', '") + "']" : "['ALL']";
 
             postDataDiv.setAttribute('data-productlv2', lv2Str);
             postDataDiv.setAttribute('data-productlv3', lv3Str);
 
+            const sourceData = productData || [];
+
+            // 1. 전체 대분류(Lv2) 고유 코드 목록 추출
+            const allLv2Codes = new Set();
+            sourceData.forEach(item => {
+                if (item.lv2) allLv2Codes.add(item.lv2);
+            });
+
+            // 2. 현재 선택된 대분류(selectedLv2Codes)에 속하는 가용 소분류(Lv3) 고유 코드 목록 추출
+            const availableLv3Items = sourceData.filter(item => selectedLv2Codes.has(item.lv2));
+            const availableLv3Codes = new Set();
+            availableLv3Items.forEach(item => {
+                if (item.lv3) availableLv3Codes.add(item.lv3);
+            });
+
+            // 3. 대분류 및 소분류 전체 선택 여부 판별
+            const isAllLv2Selected = allLv2Codes.size > 0 && Array.from(allLv2Codes).every(code => selectedLv2Codes.has(code));
+            const isAllLv3Selected = availableLv3Codes.size > 0 && Array.from(availableLv3Codes).every(code => selectedLv3Codes.has(code));
+
+            // 4. 소분류 이름 목록 및 대분류 이름 목록 구성
             let displayNames = [];
-            const sourceData = productData;
-
-            if (sourceData) {
-                lv3Array.forEach(code => {
-                    const item = sourceData.find(i => i.lv3 === code);
-                    if (item) {
-                        displayNames.push(item.lv3Name);
-                    } else {
-                        displayNames.push(code);
-                    }
-                });
-            }
-
-            if (displayNames.length > 0) {
-                document.getElementById('inProductFamily').value = displayNames.join(", ");
-            } else {
-                let lv2Names = [];
-                if (sourceData) {
-                    lv2Array.forEach(code => {
-                        const item = sourceData.find(i => i.lv2 === code);
-                        if (item) {
-                            const name = item.lv2Name;
-                            if (!lv2Names.includes(name)) lv2Names.push(name);
-                        }
-                    });
+            lv3Array.forEach(code => {
+                const item = sourceData.find(i => i.lv3 === code);
+                if (item) {
+                    displayNames.push(item.lv3Name);
+                } else {
+                    displayNames.push(code);
                 }
-                document.getElementById('inProductFamily').value = lv2Names.length > 0 ? lv2Names.join(", ") : '';
+            });
+
+            let lv2Names = [];
+            lv2Array.forEach(code => {
+                const item = sourceData.find(i => i.lv2 === code);
+                if (item) {
+                    const name = item.lv2Name;
+                    if (!lv2Names.includes(name)) lv2Names.push(name);
+                }
+            });
+
+            // 5. 4가지 동작 기준(Case 1 ~ Case 4)에 따라 편집기 표시 문구(displayText) 결정
+            let displayText = '';
+
+            if (isAllLv2Selected && isAllLv3Selected) {
+                // Case 1: 대분류 전체 선택 + 소분류 전체 선택 -> 편집기 표시 : '전제품'
+                displayText = '전제품';
+            } else if (!isAllLv2Selected && isAllLv3Selected) {
+                // Case 4: 대분류 일부 선택 + 소분류 전체 선택 -> 실제 선택 대분류 표시
+                displayText = lv2Names.join(", ");
+            } else if (isAllLv2Selected && !isAllLv3Selected) {
+                // Case 3: 대분류 전체 선택 + 소분류 일부 선택 -> 실제 선택 소분류 표시
+                displayText = displayNames.length > 0 ? displayNames.join(", ") : lv2Names.join(", ");
+            } else {
+                // Case 2: 대분류 일부 선택 (+ 소분류 일부 선택) -> 실제 선택 제품군(소분류) 표시 (소분류 없을 시 대분류)
+                displayText = displayNames.length > 0 ? displayNames.join(", ") : (lv2Names.length > 0 ? lv2Names.join(", ") : '');
             }
+
+            document.getElementById('inProductFamily').value = displayText;
 
             closeProductModal();
             toggleClearBtn('inProductFamily', 'clearProduct');
