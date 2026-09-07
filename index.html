@@ -4617,10 +4617,10 @@ ${contentBody}
                     <div style="margin-bottom: 8px;">
                         <input type="text" id="lv2SearchInput" placeholder="Search Product..." oninput="renderLv2List()" style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
-                    <div style="margin-bottom: 8px; padding: 6px 5px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px;">
-                        <label style="cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 6px; color: #e65100;">
-                            <input type="checkbox" id="allProductCheck" onchange="toggleAllProduct(this)">
-                            ★ ALL (전체 제품군)
+                    <div id="lv2SelectAllContainer" style="margin-bottom: 5px;">
+                        <label style="cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="selectAllLv2" onchange="toggleSelectAllLv2(this)">
+                            전체 선택
                         </label>
                     </div>
                     <div id="lv2List" style="overflow-y: auto; flex: 1;">
@@ -4935,9 +4935,10 @@ ${contentBody}
                 })
                 : sortedLv2;
 
-            // 검색 결과가 없는 경우 안내 문구 표시
+            // 검색 결과가 없는 경우 안내 문구 표시 및 전체 선택 체크 해제
             if (filteredLv2.length === 0) {
                 container.innerHTML = '<div style="color: #999; text-align: center; margin-top: 50px; font-size: 12px;">검색 결과가 없습니다.</div>';
+                updateSelectAllLv2State();
                 return;
             }
 
@@ -4955,18 +4956,69 @@ ${contentBody}
                 `;
                 container.appendChild(div);
             });
+
+            // 목록 렌더링 완료 후 현재 표시된 대분류 항목들의 체크 상태에 맞춰 '전체 선택' 체크박스 상태 동기화
+            updateSelectAllLv2State();
         }
 
+        /**
+         * 대분류(Product Lv2) 개별 체크박스 변경 핸들러
+         * [의도]
+         * 사용자가 대분류 항목을 하나씩 선택하거나 해제할 때 선택 상태 Set(selectedLv2Codes)을 갱신하고,
+         * 모든 항목이 선택되었는지 여부에 따라 상단 '전체 선택' 체크박스를 자동으로 동기화(연동)하기 위해 작성되었습니다.
+         */
         function handleLv2Change(checkbox) {
             const code = checkbox.value;
 
-            const allCheck = document.getElementById('allProductCheck');
-            if (allCheck && allCheck.checked) allCheck.checked = false;
             if (checkbox.checked) {
                 selectedLv2Codes.add(code);
             } else {
                 selectedLv2Codes.delete(code);
             }
+            // 개별 선택 변경 시 상단 '전체 선택' 체크박스 상태 자동 연동
+            updateSelectAllLv2State();
+            renderLv3List();
+        }
+
+        /**
+         * 대분류(Product Lv2) '전체 선택' 체크박스 상태 자동 갱신 함수
+         * [의도]
+         * 현재 Product Lv2 목록에 렌더링된 모든 체크박스를 검사하여,
+         * 1) 모든 항목이 체크되어 있으면 '전체 선택'을 자동 체크하고,
+         * 2) 하나라도 체크 해제되어 있으면 '전체 선택'을 자동 해제하도록 하여
+         * 사용자의 개별 선택과 전체 선택 UI가 항상 일치하도록 유지합니다.
+         */
+        function updateSelectAllLv2State() {
+            const selectAllCheck = document.getElementById('selectAllLv2');
+            if (!selectAllCheck) return;
+            const checkboxes = document.querySelectorAll('#lv2List input[type="checkbox"]');
+            if (checkboxes.length === 0) {
+                selectAllCheck.checked = false;
+                return;
+            }
+            // 표시된 모든 대분류 체크박스가 체크되어 있는지 검사
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            selectAllCheck.checked = allChecked;
+        }
+
+        /**
+         * 대분류(Product Lv2) '전체 선택' 클릭 토글 핸들러
+         * [의도]
+         * 상단 '전체 선택' 체크박스 조작 시 현재 화면에 노출된 모든 Product Lv2 항목을
+         * 한 번에 전체 체크하거나 전체 해제하고, 하위 소분류(Lv3) 목록도 즉시 갱신하기 위해 구현했습니다.
+         */
+        function toggleSelectAllLv2(checkbox) {
+            const inputs = document.querySelectorAll('#lv2List input[type="checkbox"]');
+            inputs.forEach(input => {
+                input.checked = checkbox.checked;
+                const code = input.value;
+                if (checkbox.checked) {
+                    selectedLv2Codes.add(code);
+                } else {
+                    selectedLv2Codes.delete(code);
+                }
+            });
+            // 대분류 일괄 변경에 따른 하위 소분류 목록 갱신
             renderLv3List();
         }
 
