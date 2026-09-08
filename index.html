@@ -5825,11 +5825,10 @@ ${contentBody}
          * [의도]
          * 1) 시스템 내부 검색 및 데이터 처리(postData의 data-productlv2, data-productlv3)에는
          *    선택된 전체 제품군 코드를 100% 온전히 유지합니다.
-         * 2) 사용자 UI(편집기 표시창 inProductFamily)에는 사용자가 정의한 4가지 동작 기준에 따라 표시합니다:
-         *    - Case 1: 대분류 전체 선택 + 소분류 전체 선택 -> '전제품'
-         *    - Case 2: 대분류 일부 선택 (+ 소분류 일부 선택) -> 실제 선택 제품군(소분류) 표시
-         *    - Case 3: 대분류 전체 선택 + 소분류 일부 선택 -> 실제 선택 소분류 표시
-         *    - Case 4: 대분류 일부 선택 + 소분류 전체 선택 -> 실제 선택 대분류 표시
+         * 2) 사용자 UI(편집기 표시창 inProductFamily) 및 제목 생성 기준:
+         *    - 대분류 전체 선택 + 소분류 전체 선택 인 경우: '전제품' 표시 유지
+         *    - 그 외 모든 부분 선택의 경우: 대분류(Product Lv2)명은 일체 표시하지 않고,
+         *      반드시 선택된 소분류(Product Lv3)명들로만 표시합니다.
          */
         function confirmProductSelection() {
             const postDataDiv = document.querySelector('.postData');
@@ -5874,7 +5873,7 @@ ${contentBody}
             const isAllLv2Selected = allLv2Codes.size > 0 && Array.from(allLv2Codes).every(code => selectedLv2Codes.has(code));
             const isAllLv3Selected = availableLv3Codes.size > 0 && Array.from(availableLv3Codes).every(code => selectedLv3Codes.has(code));
 
-            // 4. 소분류 이름 목록 및 대분류 이름 목록 구성
+            // 4. 소분류 이름 목록 구성 (Product Lv3 기준)
             let displayNames = [];
             lv3Array.forEach(code => {
                 const item = sourceData.find(i => i.lv3 === code);
@@ -5885,30 +5884,15 @@ ${contentBody}
                 }
             });
 
-            let lv2Names = [];
-            lv2Array.forEach(code => {
-                const item = sourceData.find(i => i.lv2 === code);
-                if (item) {
-                    const name = item.lv2Name;
-                    if (!lv2Names.includes(name)) lv2Names.push(name);
-                }
-            });
-
-            // 5. 4가지 동작 기준(Case 1 ~ Case 4)에 따라 편집기 표시 문구(displayText) 결정
+            // 5. 표시 기준 적용:
+            // - 대분류 전체 선택 + 소분류 전체 선택 -> '전제품'
+            // - 그 외 모든 부분 선택 -> 대분류(Product Lv2)명 표시를 일체 배제하고, 반드시 선택된 소분류(Product Lv3)명들로만 표시
             let displayText = '';
 
             if (isAllLv2Selected && isAllLv3Selected) {
-                // Case 1: 대분류 전체 선택 + 소분류 전체 선택 -> 편집기 표시 : '전제품'
                 displayText = '전제품';
-            } else if (!isAllLv2Selected && isAllLv3Selected) {
-                // Case 4: 대분류 일부 선택 + 소분류 전체 선택 -> 실제 선택 대분류 표시
-                displayText = lv2Names.join(", ");
-            } else if (isAllLv2Selected && !isAllLv3Selected) {
-                // Case 3: 대분류 전체 선택 + 소분류 일부 선택 -> 실제 선택 소분류 표시
-                displayText = displayNames.length > 0 ? displayNames.join(", ") : lv2Names.join(", ");
             } else {
-                // Case 2: 대분류 일부 선택 (+ 소분류 일부 선택) -> 실제 선택 제품군(소분류) 표시 (소분류 없을 시 대분류)
-                displayText = displayNames.length > 0 ? displayNames.join(", ") : (lv2Names.length > 0 ? lv2Names.join(", ") : '');
+                displayText = displayNames.join(", ");
             }
 
             document.getElementById('inProductFamily').value = displayText;
