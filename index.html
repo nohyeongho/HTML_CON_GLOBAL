@@ -484,6 +484,18 @@
             margin: 0 0 15px;
         }
 
+        /* [의도 - 방법 ②] 모바일 환경에서 큰 이미지가 잘리지 않고 가로 스크롤되도록 지원 */
+        .content-service-view .img-scroll {
+            position: relative;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .content-service-view .img-scroll img {
+            max-width: none !important;
+        }
+
         .content-service-view .tbl-scroll table {
             border-collapse: collapse;
         }
@@ -3913,10 +3925,26 @@
                     return "";
                 }
 
+                // [의도] 제목 앞 불필요한 'v' 문자(중복 및 공백 포함) 자동 제거 후 순수 제목 텍스트만 유지하고,
+                // 접기/불릿 아이콘은 회색 원형 도형 한가운데에 흰색 'v'가 있는 정상 형태(첨부 2번)로 렌더링
+                const cleanTitle = (title || '').replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '').trim();
+
+                // [의도 - 방법 ②] 모바일 환경에서 큰 이미지가 잘리지 않고 가로 스크롤되도록 지원
+                // 이미 스크롤 박스로 감싸져 있는 경우 중복 래핑 방지
+                temp.querySelectorAll('img').forEach(img => {
+                    if (!img.closest('.tbl-scroll, .img-scroll, [style*="overflow-x"]')) {
+                        const scrollWrap = document.createElement('div');
+                        scrollWrap.className = 'img-scroll';
+                        scrollWrap.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin: 10px 0;';
+                        img.parentNode.insertBefore(scrollWrap, img);
+                        scrollWrap.appendChild(img);
+                    }
+                });
+                const finalContent = temp.innerHTML;
+
                 return `
-<h3 class="sub-tit">
-<span class="num">v</span>${title}</h3>
-${content}`;
+<h3 class="sub-tit"><span class="num">v</span>${cleanTitle}</h3>
+${finalContent}`;
             }
 
             let actionSummaryHtml = actionSummary;
@@ -4034,6 +4062,7 @@ caption{overflow:hidden;width:1px;height:1px;margin:0;padding:0;font-size:1px;te
 .content-service-view .bul-list li{position:relative;margin-top:7px;padding-left:10px;line-height:1.5}
 .content-service-view .bul-list li:before{content:"";position:absolute;left:0;top:9px;overflow:hidden;width:4px;height:4px;border-radius:50%;background:#ec455a}
 .content-service-view .tbl-scroll{position:relative;overflow-x:auto;margin:0 0 15px}
+.content-service-view .img-scroll{position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
 .content-service-view table{border-collapse:collapse}
 .content-service-view td,.content-service-view th{padding:7px;border:1px solid #ccc;text-align:center;vertical-align:middle;font-size:14px;line-height:1.6}
 .content-service-view .tbl-scroll td,.content-service-view .tbl-scroll th{white-space:nowrap}
@@ -4463,6 +4492,20 @@ ${contentBody}
             const parser = new DOMParser();
             const doc = parser.parseFromString(fullHtml, 'text/html');
 
+            // [의도] 제목 아이콘은 회색 원형 도형 가운데에 흰색 'v'가 위치하는 형태(첨부 2번)를 보장하고,
+            // 제목 텍스트 본문 앞에 불필요한 'v' 문자가 붙어있을 경우 자동 정제
+            doc.querySelectorAll('.sub-tit').forEach(sec => {
+                const numSpan = sec.querySelector('.num');
+                if (numSpan) {
+                    numSpan.textContent = 'v';
+                }
+                Array.from(sec.childNodes).forEach(node => {
+                    if (node.nodeType === 3) {
+                        node.nodeValue = node.nodeValue.replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '');
+                    }
+                });
+            });
+
             // 1. 뷰어 전용 스타일 추가 (상단 툴바 및 편집 가이드라인)
             let styleTag = doc.getElementById('viewer-editor-style');
             if (!styleTag) {
@@ -4811,6 +4854,19 @@ ${contentBody}
                             el.removeAttribute('contenteditable');
                         });
 
+                        // [의도] 회색 원형 도형 내의 'v' 아이콘(첨부 2번)은 유지하고, 제목 텍스트 앞의 불필요한 'v'만 정제
+                        cloneDoc.querySelectorAll('.sub-tit').forEach(function(sec) {
+                            const numSpan = sec.querySelector('.num');
+                            if (numSpan) {
+                                numSpan.textContent = 'v';
+                            }
+                            Array.from(sec.childNodes).forEach(function(node) {
+                                if (node.nodeType === 3) {
+                                    node.nodeValue = node.nodeValue.replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '');
+                                }
+                            });
+                        });
+
                         const langAttr = document.documentElement.lang ? ' lang="' + document.documentElement.lang + '"' : '';
                         const cleanHtml = '<!DOCTYPE html>\\n<html' + langAttr + '>\\n' + cloneDoc.innerHTML + '\\n</html>';
 
@@ -4985,22 +5041,25 @@ ${contentBody}
         function syncViewerChanges(updatedHtml) {
             if (!updatedHtml || !updatedHtml.trim()) return;
 
+            // [의도] 회색 원형 도형 내 'v' 아이콘(첨부 2번)이 항상 유지되도록 보장
+            const cleanHtml = updatedHtml.replace(/<span\s+class=["']num["']\s*><\/span>/gi, '<span class="num">v</span>');
+
             // 1. HTML 직접 입력 뷰어 모달의 textarea에 반영
             const manualInput = document.getElementById('manualHtmlInput');
             if (manualInput) {
-                manualInput.value = updatedHtml;
+                manualInput.value = cleanHtml;
             }
 
             // 2. 메인 화면의 변환 코드 출력 textarea에 반영
             const codeOutput = document.getElementById('codeOutput');
             if (codeOutput) {
-                codeOutput.value = updatedHtml;
+                codeOutput.value = cleanHtml;
             }
 
             // 3. 메인 화면의 기기 미리보기(previewContainer)에 반영
             try {
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(updatedHtml, 'text/html');
+                const doc = parser.parseFromString(cleanHtml, 'text/html');
                 const postDataEl = doc.querySelector('.postData');
                 const contentViewEl = doc.querySelector('.content-service-view');
                 const previewContainer = document.getElementById('previewContainer');
@@ -5018,10 +5077,10 @@ ${contentBody}
                     loadFromHTML(true); // silent = true: 확인 팝업 없이 조용히 동기화
                     // loadFromHTML 내부 실행 후 최종 HTML 원본이 유지되도록 codeOutput 재확정
                     if (codeOutput) {
-                        codeOutput.value = updatedHtml;
+                        codeOutput.value = cleanHtml;
                     }
                     if (manualInput) {
-                        manualInput.value = updatedHtml;
+                        manualInput.value = cleanHtml;
                     }
                 }
             } catch (e) {
@@ -5127,7 +5186,13 @@ ${contentBody}
                 let mainRepairDone = false;
 
                 sections.forEach(sec => {
-                    const title = sec.textContent.replace(/^v/, '').trim();
+                    // [의도] UI 아이콘 요소(.num)를 복제본에서 먼저 제거하여 순수 제목 텍스트만 분리 (요구사항 2, 4)
+                    const secClone = sec.cloneNode(true);
+                    const numEl = secClone.querySelector('.num');
+                    if (numEl) numEl.remove();
+
+                    // [의도] 제목 앞 불필요한 'v' 문자(중복 및 공백 포함) 자동 제거 후 순수 제목 텍스트 추출 (요구사항 3, 5)
+                    const title = secClone.textContent.replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '').trim();
                     let content = '';
                     let next = sec.nextSibling;
                     const tempDiv = document.createElement('div');
@@ -5135,12 +5200,19 @@ ${contentBody}
                         tempDiv.appendChild(next.cloneNode(true));
                         next = next.nextSibling;
                     }
+                    // [의도 - 방법 ②] 에디터로 복원 시 .img-scroll 래퍼를 제거(unwrap)하여 불필요한 div 중첩 없이 순수 이미지만 깔끔하게 복원
+                    tempDiv.querySelectorAll('.img-scroll').forEach(wrap => {
+                        while (wrap.firstChild) {
+                            wrap.parentNode.insertBefore(wrap.firstChild, wrap);
+                        }
+                        wrap.remove();
+                    });
                     content = tempDiv.innerHTML.trim();
 
 
-                    const sTitle = document.getElementById('inSymptomTitle').value;
-                    const cTitle = document.getElementById('inCauseTitle').value;
-                    const rTitle = document.getElementById('inRepairTitle').value;
+                    const sTitle = (document.getElementById('inSymptomTitle').value || '').replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '').trim();
+                    const cTitle = (document.getElementById('inCauseTitle').value || '').replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '').trim();
+                    const rTitle = (document.getElementById('inRepairTitle').value || '').replace(/^[\s\uFEFF\u200B-\u200D]*(?:v\s*)+/i, '').trim();
 
                     if (!mainSymptomDone && title === sTitle) {
                         document.getElementById('inSymptom').innerHTML = content;
