@@ -3938,6 +3938,9 @@
                         scrollWrap.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin: 10px 0;';
                         img.parentNode.insertBefore(scrollWrap, img);
                         scrollWrap.appendChild(img);
+                        // [의도] 모바일 미디어쿼리나 외부 시스템의 img { max-width: 100% !important }에 의해
+                        // 이미지가 화면 폭으로 강제 축소되어 가로 스크롤이 사라지는 문제를 방지
+                        img.style.setProperty('max-width', 'none', 'important');
                     }
                 });
                 const finalContent = temp.innerHTML;
@@ -4063,6 +4066,7 @@ caption{overflow:hidden;width:1px;height:1px;margin:0;padding:0;font-size:1px;te
 .content-service-view .bul-list li:before{content:"";position:absolute;left:0;top:9px;overflow:hidden;width:4px;height:4px;border-radius:50%;background:#ec455a}
 .content-service-view .tbl-scroll{position:relative;overflow-x:auto;margin:0 0 15px}
 .content-service-view .img-scroll{position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+.content-service-view .img-scroll img{max-width:none!important}
 .content-service-view table{border-collapse:collapse}
 .content-service-view td,.content-service-view th{padding:7px;border:1px solid #ccc;text-align:center;vertical-align:middle;font-size:14px;line-height:1.6}
 .content-service-view .tbl-scroll td,.content-service-view .tbl-scroll th{white-space:nowrap}
